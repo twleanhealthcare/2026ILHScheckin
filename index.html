@@ -160,7 +160,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 10l5-5 5 5M12 5v15"></path></svg>
                         GitHub 雲端自動同步設定
                     </h3>
-                    <p class="text-xs text-slate-500">設定一次後，後台新增人員、刪除或匯入 CSV 即可一鍵自動上傳至 GitHub，所有人即時同步！</p>
+                    <p class="text-xs text-slate-500">設定一次後，無論前台報到或後台新增/刪除人員，皆會自動同步至 GitHub！</p>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">GitHub 帳號 (Owner)</label>
@@ -179,7 +179,7 @@
                         <button onclick="saveGitHubSettings()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition">儲存設定</button>
                         <button onclick="syncToGitHub()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium transition shadow flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                            一鍵同步更新至 GitHub
+                            手動同步更新至 GitHub
                         </button>
                     </div>
                 </div>
@@ -341,13 +341,14 @@
             showAlert('GitHub 雲端設定已儲存！');
         }
 
-        async function syncToGitHub() {
+        // 自動同步至 GitHub 的核心函式 (供報到與後台共用)
+        async function syncToGitHub(silent = false) {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
-                showAlert('請先填寫並儲存 GitHub 帳號、倉庫名稱與 Token！', 'error');
-                return;
+                if (!silent) showAlert('尚未設定 GitHub 雲端同步，資料僅暫存於本機。', 'error');
+                return false;
             }
 
-            showAlert('正在透過 GitHub API 同步更新雲端名單...', 'success');
+            if (!silent) showAlert('正在同步更新至 GitHub 雲端...', 'success');
 
             const filePath = 'attendees.json';
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
@@ -378,21 +379,22 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: 'Admin update attendees via web dashboard',
+                        message: 'Auto update attendees status',
                         content: base64Content,
                         sha: sha ? sha : undefined
                     })
                 });
 
                 if (putRes.ok) {
-                    showAlert('🎉 成功同步更新至 GitHub 雲端！所有人重新整理即可看到最新名單。');
+                    if (!silent) showAlert('🎉 成功同步更新至 GitHub 雲端！');
+                    return true;
                 } else {
                     const errJson = await putRes.json();
                     throw new Error(`寫入 GitHub 失敗 (${putRes.status}): ${errJson.message}`);
                 }
             } catch (err) {
-                alert('【同步失敗詳細原因】\n' + err.message);
-                showAlert('同步失敗，請看彈出視窗錯誤訊息', 'error');
+                if (!silent) alert('【同步失敗詳細原因】\n' + err.message);
+                return false;
             }
         }
 
@@ -522,7 +524,8 @@
             checkDeviceShortcut();
         }
 
-        function handleCheckin(e) {
+        // 修改：與會者線上報到時，自動背景同步寫入 GitHub
+        async function handleCheckin(e) {
             e.preventDefault();
             const now = new Date();
             if (checkinSettings.start && now < new Date(checkinSettings.start)) {
@@ -574,6 +577,10 @@
             target.credits = creditsStr;
             
             saveAttendeesToLocalStorage();
+            
+            // 自動背景同步到 GitHub（靜默或提示）
+            await syncToGitHub(true);
+
             lastCheckedBadge = badgeNo;
             addDeviceBadge(badgeNo);
 
@@ -611,7 +618,7 @@
                 document.getElementById('adminLoginCard').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 showAlert('後台登入成功！');
-                renderTable();
+                loadAttendeesData(); // 登入時強制抓取最新雲端狀態
             } else {
                 showAlert('帳號或密碼錯誤！', 'error');
             }
@@ -657,7 +664,8 @@
             saveAttendeesToLocalStorage();
             closeManualModal();
             renderTable();
-            showAlert(`已成功手動加入與會人員！記得點擊上方的「一鍵同步更新至 GitHub」。`);
+            syncToGitHub(true);
+            showAlert(`已成功手動加入與會人員並同步至雲端！`);
         }
 
         function importCSV(e) {
@@ -693,7 +701,8 @@
                 });
                 saveAttendeesToLocalStorage();
                 renderTable();
-                showAlert(`成功匯入 ${count} 筆！記得點擊上方的「一鍵同步更新至 GitHub」。`);
+                syncToGitHub(true);
+                showAlert(`成功匯入 ${count} 筆並自動同步至雲端！`);
                 e.target.value = '';
             };
             reader.readAsText(file);
@@ -736,21 +745,22 @@
                 }
                 saveAttendeesToLocalStorage();
                 renderTable();
-                showAlert(`已更新編號 ${badgeNo} 的報到狀態。`);
+                syncToGitHub(true);
+                showAlert(`已更新編號 ${badgeNo} 的報到狀態並同步至雲端。`);
                 checkDeviceShortcut();
             }
         }
 
-        // 強制獨立刪除函式
         function deleteAttendee(badgeNo) {
             const target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
-            if (confirm(`【警告】確定要刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？此動作無法復原！`)) {
+            if (confirm(`【警告】確定要刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
                 attendees = attendees.filter(a => a.badgeNo !== badgeNo);
                 saveAttendeesToLocalStorage();
                 renderTable();
-                showAlert(`已成功刪除編號 ${badgeNo}。記得點擊上方的「一鍵同步更新至 GitHub」！`);
+                syncToGitHub(true);
+                showAlert(`已成功刪除編號 ${badgeNo} 並同步至雲端！`);
             }
         }
 
@@ -759,6 +769,9 @@
         }
 
         function renderTable() {
+            // 每次渲染前先從雲端重新抓取最新狀態，確保後台顯示絕對即時
+            loadAttendeesData();
+
             const tbody = document.getElementById('rosterTableBody');
             tbody.innerHTML = '';
             document.getElementById('recordCount').textContent = `總計：${attendees.length} 筆`;
