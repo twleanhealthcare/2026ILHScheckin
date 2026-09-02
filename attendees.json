@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "badgeNo": "001",
+    "fullName": "張O瑜",
+    "maskedName": "張O瑜",
+    "isCheckedIn": false,
+    "checkinTime": "未報到",
+    "lunch": "未填寫",
+    "credits": "未填寫"
+  }
+]
