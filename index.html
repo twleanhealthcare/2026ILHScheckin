@@ -20,7 +20,7 @@
 
     <!-- 頂部導覽列 -->
     <header class="bg-[#0F348D] text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="text-center sm:text-left">
                 <h1 class="text-lg sm:text-xl font-bold tracking-wider">2026精實國際醫療高峰會</h1>
                 <p class="text-xs text-blue-200">Lean International Medical Summit 2026</p>
@@ -37,12 +37,12 @@
     </header>
 
     <!-- 主要內容區 -->
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 w-full flex-grow space-y-6">
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full flex-grow space-y-6">
 
         <!-- 全域提示訊息框 -->
         <div id="alertBox" class="hidden p-4 rounded-xl text-sm font-medium border shadow-sm transition-all duration-300"></div>
 
-        <!-- 區塊一：與會者報到頁面（100% 免權杖、跨裝置即時同步） -->
+        <!-- 區塊一：與會者報到頁面 -->
         <section id="checkinSection" class="space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-10 max-w-xl mx-auto space-y-6">
                 <div class="text-center pb-4 border-b border-slate-100">
@@ -187,23 +187,23 @@
                     </div>
                 </div>
 
-                <!-- 勾稽清單表格 -->
+                <!-- 勾稽清單表格 (已升級精緻版面) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="font-bold text-slate-700 text-base">與會人員暨報到勾稽清單</h3>
                         <span id="recordCount" class="text-xs px-3 py-1 bg-slate-100 text-slate-600 font-bold rounded-full">總計：0 筆</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
+                        <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
-                                    <th class="p-4">大會編號</th>
-                                    <th class="p-4">與會姓名 (去識別化)</th>
-                                    <th class="p-4">報到狀態</th>
-                                    <th class="p-4">報到時間</th>
-                                    <th class="p-4">午餐需求</th>
-                                    <th class="p-4">教育積分</th>
-                                    <th class="p-4 text-center">操作</th>
+                                    <th class="py-4 px-5 w-28">大會編號</th>
+                                    <th class="py-4 px-5 w-36">與會姓名</th>
+                                    <th class="py-4 px-5 w-28 text-center">報到狀態</th>
+                                    <th class="py-4 px-5">報到時間</th>
+                                    <th class="py-4 px-5 w-28">午餐需求</th>
+                                    <th class="py-4 px-5">教育積分</th>
+                                    <th class="py-4 px-5 text-center w-48">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="rosterTableBody" class="divide-y divide-slate-100"></tbody>
@@ -268,9 +268,8 @@
         © 2026 精實國際醫療高峰會 All Rights Reserved.
     </footer>
 
-    <!-- JavaScript 核心邏輯 (Google 試算表連動版) -->
+    <!-- JavaScript 核心邏輯 -->
     <script>
-        // 已自動帶入您的 Google Apps Script 部署網址
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygS1xCsG32PBsJm4FmlDMCieLOd9ecbvY96FfnYViBehrMyC_94hfe6XkE9_LGP_or/exec";
 
         let checkinSettings = { start: '', end: '' };
@@ -288,7 +287,6 @@
             }
         });
 
-        // 從 Google 試算表讀取名單
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime());
@@ -302,7 +300,6 @@
             }
         }
 
-        // 將整批名單同步寫回 Google 試算表
         async function pushCloudAttendees(updatedAttendees) {
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
@@ -383,7 +380,20 @@
             return name;
         }
 
-        // 與會者前台報到（完全免權杖、多裝置即時同步）
+        // 格式化時間：將長串英文日期轉為乾淨的 YYYY/MM/DD HH:mm:ss
+        function formatCheckinTime(timeStr) {
+            if (!timeStr || timeStr === '未報到') return '未報到';
+            const d = new Date(timeStr);
+            if (isNaN(d.getTime())) return timeStr; // 若原本就是短格式則直接回傳
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            const ss = String(d.getSeconds()).padStart(2, '0');
+            return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
+        }
+
         async function handleCheckin(e) {
             e.preventDefault();
             const now = new Date();
@@ -438,7 +448,7 @@
             }
 
             target.isCheckedIn = true;
-            target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
+            target.checkinTime = new Date().toString(); // 儲存標準時間
             target.lunch = lunch;
             target.credits = creditsStr;
 
@@ -592,7 +602,7 @@
 
             let csvContent = "\uFEFF大會編號,完整姓名,報到時間,午餐選項,教育積分需求\n";
             checkedInList.forEach(item => {
-                csvContent += `${item.badgeNo},${item.fullName},${item.checkinTime},${item.lunch},"${item.credits}"\n`;
+                csvContent += `${item.badgeNo},${item.fullName},${formatCheckinTime(item.checkinTime)},${item.lunch},"${item.credits}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -614,7 +624,7 @@
             if (target) {
                 target.isCheckedIn = !target.isCheckedIn;
                 if (target.isCheckedIn) {
-                    target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
+                    target.checkinTime = new Date().toString();
                     target.lunch = '現場櫃台協助';
                     target.credits = '人工勾稽';
                 } else {
@@ -683,17 +693,17 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-4 font-mono font-bold text-slate-700">${item.badgeNo}</td>
-                    <td class="p-4 text-slate-800 font-medium">${item.maskedName}</td>
-                    <td class="p-4">
+                    <td class="py-4 px-5 font-mono font-bold text-slate-700">${item.badgeNo}</td>
+                    <td class="py-4 px-5 text-slate-800 font-medium">${item.maskedName}</td>
+                    <td class="py-4 px-5 text-center">
                         ${item.isCheckedIn 
-                            ? '<span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">已報到</span>' 
-                            : '<span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">未報到</span>'}
+                            ? '<span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold whitespace-nowrap">已報到</span>' 
+                            : '<span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold whitespace-nowrap">未報到</span>'}
                     </td>
-                    <td class="p-4 text-slate-500 text-xs font-mono">${item.checkinTime || '未報到'}</td>
-                    <td class="p-4 text-slate-600 text-xs">${item.lunch}</td>
-                    <td class="p-4 text-slate-600 text-xs">${item.credits}</td>
-                    <td class="p-4 text-center space-x-1.5 whitespace-nowrap">
+                    <td class="py-4 px-5 text-slate-500 text-xs font-mono">${formatCheckinTime(item.checkinTime)}</td>
+                    <td class="py-4 px-5 text-slate-600 text-xs">${item.lunch}</td>
+                    <td class="py-4 px-5 text-slate-600 text-xs">${item.credits}</td>
+                    <td class="py-4 px-5 text-center space-x-1.5 whitespace-nowrap">
                         ${item.isCheckedIn ? `<button type="button" onclick="viewCard('${item.badgeNo}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition shadow-sm">檢視</button>` : ''}
                         <button type="button" onclick="toggleCheckinStatus('${item.badgeNo}')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition shadow-sm">
                             ${item.isCheckedIn ? '取消' : '設為已報到'}
