@@ -337,7 +337,6 @@
             }
         }
 
-        // 1. 強固的讀取名單函數
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch('attendees.json?t=' + new Date().getTime(), {
@@ -354,7 +353,7 @@
             }
         }
 
-        // 2. 絕對穩定的單次直連寫入函數（解決勾稽與刪除失敗的核心）
+        // 升級版帶詳細錯誤攔截的 GitHub 寫入函數
         async function pushCloudAttendees(updatedAttendees) {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
                 alert('【錯誤】尚未在後台設定 GitHub 帳號、Repo 與 Token！');
@@ -365,32 +364,34 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
-                // 步驟 A：先取得目前遠端最新的 SHA
+                // 1. 取得最新 SHA
                 const getRes = await fetch(apiUrl + '?t=' + new Date().getTime(), {
                     cache: 'no-store',
                     headers: { 
                         'Authorization': `token ${ghSettings.token}`,
-                        'Cache-Control': 'no-cache'
+                        'Cache-Control': 'no-cache',
+                        'Accept': 'application/vnd.github.v3+json'
                     }
                 });
                 
                 if (!getRes.ok) {
                     const errData = await getRes.json();
-                    throw new Error(`讀取遠端檔案 SHA 失敗: ${errData.message}`);
+                    throw new Error(`讀取遠端 SHA 失敗 [HTTP ${getRes.status}]: ${errData.message || '未知錯誤'}`);
                 }
                 const fileData = await getRes.json();
                 const currentSha = fileData.sha;
 
-                // 步驟 B：將資料轉換為正確的 Base64（支援中文與特殊符號）
+                // 2. Base64 編碼
                 const jsonString = JSON.stringify(updatedAttendees, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
 
-                // 步驟 C：送出 PUT 請求寫回 GitHub
+                // 3. 寫入 PUT
                 const putRes = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `token ${ghSettings.token}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.v3+json'
                     },
                     body: JSON.stringify({
                         message: 'Update attendees via admin/checkin system',
@@ -404,11 +405,11 @@
                     return true;
                 } else {
                     const errJson = await putRes.json();
-                    throw new Error(`寫入 GitHub 失敗 (${putRes.status}): ${errJson.message}`);
+                    throw new Error(`寫入 GitHub 失敗 [HTTP ${putRes.status}]: ${errJson.message || '未知錯誤'}`);
                 }
             } catch (err) {
                 console.error('GitHub 寫入失敗細節:', err);
-                alert('【雲端同步失敗】\n' + err.message);
+                alert('【雲端同步失敗詳細原因】\n' + err.message + '\n\n請檢查 F12 主控台或確認 Token 權限。');
                 return false;
             }
         }
@@ -534,10 +535,7 @@
             showAlert('正在將報到狀態同步寫入雲端...', 'success');
             const success = await pushCloudAttendees(attendees);
 
-            if (!success) {
-                showAlert('報到狀態寫入雲端失敗，請洽詢櫃台人員！', 'error');
-                return;
-            }
+            if (!success) return;
 
             lastCheckedBadge = badgeNo;
             document.getElementById('reopenCardContainer').classList.add('hidden');
@@ -667,8 +665,10 @@
                     cachedAttendees = attendees;
                     renderTable();
                     showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
-                    await pushCloudAttendees(attendees);
-                    showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`, 'success');
+                    const success = await pushCloudAttendees(attendees);
+                    if (success) {
+                        showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`, 'success');
+                    }
                 } catch (err) {
                     console.error(err);
                     showAlert('CSV 格式解析錯誤', 'error');
@@ -702,7 +702,6 @@
             showAlert('已成功匯出已報到人員清單！', 'success');
         }
 
-        // 3. 修正後的「切換勾稽狀態」函數（點擊設為已報到 / 取消）
         async function toggleCheckinStatus(badgeNo) {
             showAlert('正在更新勾稽狀態...', 'success');
             let attendees = await fetchCloudAttendees();
@@ -721,7 +720,7 @@
                 }
                 
                 cachedAttendees = attendees;
-                renderTable(); // 先更新畫面
+                renderTable();
 
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
@@ -730,7 +729,6 @@
             }
         }
 
-        // 4. 修正後的「刪除人員」函數
         async function deleteAttendee(badgeNo) {
             let attendees = await fetchCloudAttendees();
             const target = attendees.find(a => a.badgeNo === badgeNo);
@@ -739,7 +737,7 @@
             if (confirm(`【警告】確定要從雲端徹底刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
                 attendees = attendees.filter(a => a.badgeNo !== badgeNo);
                 cachedAttendees = attendees;
-                renderTable(); // 先從畫面移除
+                renderTable();
 
                 showAlert(`正在從雲端徹底刪除編號 ${badgeNo}...`, 'success');
                 const success = await pushCloudAttendees(attendees);
