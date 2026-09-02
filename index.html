@@ -353,7 +353,6 @@
             }
         }
 
-        // 強固版 GitHub 寫入：內建自動重試機制 (Auto-Retry on SHA Conflict)
         async function pushCloudAttendees(updatedAttendees, retryCount = 0) {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
                 alert('【錯誤】尚未在後台設定 GitHub 帳號、Repo 與 Token！無法寫入雲端。');
@@ -364,7 +363,6 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
-                // 1. 每次寫入前精準取得最新的 SHA
                 const getRes = await fetch(apiUrl + '?t=' + new Date().getTime(), {
                     cache: 'no-store',
                     headers: { 
@@ -383,7 +381,6 @@
                 const jsonString = JSON.stringify(updatedAttendees, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
 
-                // 2. 送出 PUT 請求
                 const putRes = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
@@ -402,10 +399,8 @@
                     return true;
                 } else {
                     const errJson = await putRes.json();
-                    // 若發生 409 衝突且重試次數小於 2 次，自動重新讀取 SHA 再試一次
                     if (putRes.status === 409 && retryCount < 2) {
-                        console.warn('偵測到 SHA 衝突，正在自動重試...', retryCount + 1);
-                        await new Promise(resolve => setTimeout(resolve, 800)); // 稍待 0.8 秒
+                        await new Promise(resolve => setTimeout(resolve, 600));
                         return await pushCloudAttendees(updatedAttendees, retryCount + 1);
                     }
                     throw new Error(`寫入 GitHub 失敗 (${putRes.status}): ${errJson.message}`);
@@ -624,13 +619,14 @@
                 credits: '未填寫'
             });
 
-            showAlert('正在將新人員寫入雲端...', 'success');
-            const success = await pushCloudAttendees(attendees);
-            if (success) {
-                closeManualModal();
-                renderTable();
-                showAlert(`已成功新增「${fullName} (${badgeNo})」並即時同步至雲端！`, 'success');
-            }
+            // 立即渲染畫面（極速響應）
+            cachedAttendees = attendees;
+            renderTable();
+            closeManualModal();
+            showAlert(`已成功新增「${fullName} (${badgeNo})」！正在背景同步至雲端...`, 'success');
+
+            // 背景非同步寫入
+            await pushCloudAttendees(attendees);
         }
 
         async function importCSV(e) {
@@ -668,12 +664,10 @@
                         }
                     });
 
-                    showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
-                    const success = await pushCloudAttendees(attendees);
-                    if (success) {
-                        renderTable();
-                        showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`, 'success');
-                    }
+                    cachedAttendees = attendees;
+                    renderTable();
+                    showAlert(`成功匯入 ${count} 筆人員！正在背景同步至雲端...`, 'success');
+                    await pushCloudAttendees(attendees);
                 } catch (err) {
                     console.error(err);
                     showAlert('CSV 格式解析錯誤', 'error');
@@ -721,25 +715,32 @@
                     target.lunch = '未填寫';
                     target.credits = '未填寫';
                 }
-                const success = await pushCloudAttendees(attendees);
-                if (success) {
-                    renderTable();
-                    showAlert(`已更新編號 ${badgeNo} 的狀態並同步至雲端。`, 'success');
-                }
+                cachedAttendees = attendees;
+                renderTable();
+                showAlert(`已更新編號 ${badgeNo} 狀態，背景同步中...`, 'success');
+                await pushCloudAttendees(attendees);
             }
         }
 
+        // 刪除人員（立即前端刪除，背景同步）
         async function deleteAttendee(badgeNo) {
             let attendees = await fetchCloudAttendees();
             const target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             if (confirm(`【警告】確定要從雲端徹底刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
+                // 1. 立即從本地暫存陣列中過濾掉該筆資料
                 attendees = attendees.filter(a => a.badgeNo !== badgeNo);
+                cachedAttendees = attendees;
+
+                // 2. 立即重新渲染表格（0 延遲消失）
+                renderTable();
+                showAlert(`已從清單中刪除編號 ${badgeNo}！正在背景同步至雲端...`, 'success');
+
+                // 3. 背景發送 GitHub 刪除同步
                 const success = await pushCloudAttendees(attendees);
-                if (success) {
-                    renderTable();
-                    showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`, 'success');
+                if (!success) {
+                    showAlert('⚠️ 雲端同步失敗，請檢查網路或 GitHub Token 設定！', 'error');
                 }
             }
         }
@@ -753,9 +754,23 @@
             const countElem = document.getElementById('recordCount');
             if (!tbody) return;
 
-            tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">正在從 GitHub 雲端讀取即時名單...</td></tr>`;
+            // 若本地已有快取，直接優先渲染，不用白白轉圈圈等待
+            if (cachedAttendees.length > 0) {
+                displayTableData(cachedAttendees);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">正在從 GitHub 雲端讀取即時名單...</td></tr>`;
+            }
 
+            // 同步在背景抓取最新雲端資料校驗
             let attendees = await fetchCloudAttendees();
+            displayTableData(attendees);
+        }
+
+        function displayTableData(attendees) {
+            const tbody = document.getElementById('rosterTableBody');
+            const countElem = document.getElementById('recordCount');
+            if (!tbody) return;
+
             tbody.innerHTML = '';
             if (countElem) countElem.textContent = `總計：${attendees.length} 筆`;
 
