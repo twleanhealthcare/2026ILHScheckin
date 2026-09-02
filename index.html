@@ -304,7 +304,6 @@
         let cachedAttendees = [];
         let lastCheckedBadge = '';
 
-        // 初始化安全載入
         window.addEventListener('DOMContentLoaded', () => {
             try {
                 const savedSettings = localStorage.getItem('summit_settings');
@@ -354,7 +353,8 @@
             }
         }
 
-        async function pushCloudAttendees(updatedAttendees) {
+        // 強固版 GitHub 寫入：內建自動重試機制 (Auto-Retry on SHA Conflict)
+        async function pushCloudAttendees(updatedAttendees, retryCount = 0) {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
                 alert('【錯誤】尚未在後台設定 GitHub 帳號、Repo 與 Token！無法寫入雲端。');
                 return false;
@@ -364,6 +364,7 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
+                // 1. 每次寫入前精準取得最新的 SHA
                 const getRes = await fetch(apiUrl + '?t=' + new Date().getTime(), {
                     cache: 'no-store',
                     headers: { 
@@ -382,6 +383,7 @@
                 const jsonString = JSON.stringify(updatedAttendees, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
 
+                // 2. 送出 PUT 請求
                 const putRes = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
@@ -400,11 +402,19 @@
                     return true;
                 } else {
                     const errJson = await putRes.json();
-                    throw new Error(`寫入 GitHub 失敗: ${errJson.message}`);
+                    // 若發生 409 衝突且重試次數小於 2 次，自動重新讀取 SHA 再試一次
+                    if (putRes.status === 409 && retryCount < 2) {
+                        console.warn('偵測到 SHA 衝突，正在自動重試...', retryCount + 1);
+                        await new Promise(resolve => setTimeout(resolve, 800)); // 稍待 0.8 秒
+                        return await pushCloudAttendees(updatedAttendees, retryCount + 1);
+                    }
+                    throw new Error(`寫入 GitHub 失敗 (${putRes.status}): ${errJson.message}`);
                 }
             } catch (err) {
                 console.error('GitHub 寫入失敗細節:', err);
-                alert('【雲端同步失敗】\n' + err.message);
+                if (retryCount >= 2) {
+                    alert('【雲端同步失敗】\n' + err.message);
+                }
                 return false;
             }
         }
