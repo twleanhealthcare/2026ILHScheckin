@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 精實國際醫療高峰會線上報到</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        /* 極致放大編號號碼，支援三位數自適應不換行 */
+        #modalBadgeNo {
+            font-size: clamp(7rem, 30vw, 16rem);
+            line-height: 0.85;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between" oncontextmenu="return false;">
+
+    <header class="bg-[#0F348D] text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-wider text-center sm:text-left">2026 精實國際醫療高峰會</h1>
+                <p class="text-xs text-blue-200 text-center sm:text-left">2026 International Lean Healthcare Summit (Asia)</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="navCheckinBtn" onclick="switchTab('checkin')" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow">
+                    與會者報到
+                </button>
+                <button id="navAdminBtn" onclick="switchTab('admin')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow">
+                    Sign In
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
+
+        <div id="alertBox" class="hidden mb-6 p-4 rounded-lg text-sm font-medium border transition-all"></div>
+
+        <section id="checkinSection" class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-[#0F348D] mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        線上報到填寫
+                    </h2>
+
+                    <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">大會編號 <span class="text-red-500">*</span></label>
+                            <input type="text" id="badgeNo" required placeholder="EX_001" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">完整姓名 <span class="text-red-500">*</span></label>
+                            <input type="text" id="fullName" required placeholder="請輸入您的完整姓名" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">確認中午是否用餐 <span class="text-red-500">*</span></label>
+                            <div class="flex gap-6 mt-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="lunch" value="葷食" required class="text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">葷食</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="lunch" value="素食" class="text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">素食</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="lunch" value="不用餐" class="text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">不用餐</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">是否需要教育積分（可複選）</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="credits" value="醫師(品質2.4)" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">醫師 (品質 2.4)</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="credits" value="護理師(品質2.4)" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">護理師 (品質 2.4)</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="credits" value="公務人員" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">公務人員</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" name="credits" value="醫療品質協會" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
+                                    <span class="text-sm">醫療品質協會</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 bg-[#0F348D] hover:bg-blue-900 text-white font-semibold rounded-lg transition shadow-md text-sm">
+                            確認送出並產生報到卡片
+                        </button>
+                    </form>
+
+                    <div id="singleDeviceCardShortcut" class="hidden mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-2">
+                        <p class="text-xs text-emerald-800 font-medium">✨ 已完成報到（編號：<span id="singleBadgeText" class="font-mono font-bold"></span>） ✨</p>
+                        <button type="button" onclick="showSingleDeviceCard()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow">
+                            顯示報到卡片
+                        </button>
+                    </div>
+
+                    <div id="multiDeviceCardShortcut" class="hidden mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-3">
+                        <p class="text-xs text-emerald-800 font-bold text-center">✨ 本裝置已紀錄多筆報到卡片，請點擊對應人員顯示報到卡片 ✨</p>
+                        <div id="shortcutListContainer" class="flex flex-wrap gap-2 justify-center">
+                            </div>
+                    </div>
+
+                    <div id="reopenCardContainer" class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center space-y-2">
+                        <p class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！若不小心關閉畫面，可點擊下方按鈕重新顯示卡片。</p>
+                        <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition shadow">
+                            點此重新顯示您的報到卡片
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="adminSection" class="hidden space-y-6">
+            <div id="adminLoginCard" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-md mx-auto">
+                <h2 class="text-lg font-bold text-[#0F348D] mb-4 text-center">後台管理登入</h2>
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">帳號</label>
+                        <input type="text" id="adminUser" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">密碼</label>
+                        <input type="password" id="adminPass" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white font-semibold rounded-lg transition text-sm">
+                        登入後台
+                    </button>
+                </form>
+            </div>
+
+            <div id="adminDashboard" class="hidden space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+                    <h3 class="font-bold text-[#0F348D] mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        報到時間區間設定
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">開始報到時間</label>
+                            <input type="datetime-local" id="startTime" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-[#0F348D]">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">結束報到時間</label>
+                            <input type="datetime-local" id="endTime" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-[#0F348D]">
+                        </div>
+                    </div>
+                    <div class="mt-3 flex justify-end">
+                        <button onclick="saveCheckinTimeSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white rounded-lg text-xs font-medium transition shadow">
+                            儲存報到時間設定
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <span class="font-bold text-[#0F348D]">管理員控制台</span>
+                        <span class="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-medium">已授權登入</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+                        <label class="cursor-pointer px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            匯入名單 (CSV)
+                            <input type="file" id="csvFile" accept=".csv" onchange="importCSV(event)" class="hidden">
+                        </label>
+                        <button onclick="openManualModal()" class="px-3.5 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            手動鍵入名單
+                        </button>
+                        <button onclick="exportCheckedInCSV()" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            匯出已報到名單
+                        </button>
+                        <button onclick="handleLogout()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow">
+                            登出
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-700">與會人員暨報到勾稽清單</h3>
+                        <span id="recordCount" class="text-xs text-slate-500">總計：0 筆</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
+                                    <th class="p-3 sm:p-4">大會編號</th>
+                                    <th class="p-3 sm:p-4">與會姓名 (去識別化)</th>
+                                    <th class="p-3 sm:p-4">報到狀態</th>
+                                    <th class="p-3 sm:p-4">報到時間</th>
+                                    <th class="p-3 sm:p-4">午餐需求</th>
+                                    <th class="p-3 sm:p-4">教育積分</th>
+                                    <th class="p-3 sm:p-4 text-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rosterTableBody" class="divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+        <div class="bg-[#0F348D] text-white rounded-3xl p-6 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center transform transition-all border-4 border-white/20 flex flex-col justify-between" style="min-height: 560px;">
+            <div class="absolute -right-12 -bottom-12 w-56 h-56 bg-white/10 rounded-full pointer-events-none"></div>
+            
+            <div class="space-y-1.5 pt-2">
+                <p class="text-base uppercase tracking-widest text-blue-200 font-bold">2026 精實國際醫療高峰會</p>
+                <div>
+                    <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-black rounded-full uppercase tracking-wider shadow">已完成報到</span>
+                </div>
+            </div>
+
+            <div class="my-auto py-2 w-full flex flex-col justify-center items-center">
+                <span class="block text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">大會報到編號</span>
+                <div class="w-full flex justify-center items-center">
+                    <span id="modalBadgeNo" class="font-mono font-black tracking-tight text-white drop-shadow-2xl"></span>
+                </div>
+            </div>
+
+            <div class="space-y-3 pb-1">
+                <div class="bg-white text-[#0F348D] py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
+                    ⚠️ 請至櫃台出示此畫面領取資料袋
+                </div>
+
+                <button onclick="closeCardModal()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider">
+                    確認並關閉畫面
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="manualModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-[#0F348D]">手動鍵入與會人員</h3>
+            <form id="manualForm" onsubmit="handleManualAdd(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">大會編號</label>
+                    <input type="text" id="manualBadge" required placeholder="例如：LIM2026-100" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">完整姓名</label>
+                    <input type="text" id="manualName" required placeholder="例如：陳大文" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeManualModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-medium transition">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white rounded-lg text-sm font-medium transition">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-8">
+        © 2026 精實國際醫療高峰會 All Rights Reserved.
+    </footer>
+
+    <script>
+        let attendees = JSON.parse(localStorage.getItem('summit_attendees')) || [];
+        let checkinSettings = JSON.parse(localStorage.getItem('summit_settings')) || { start: '', end: '' };
+        let myDeviceBadges = JSON.parse(localStorage.getItem('my_device_badges')) || [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
+            if (checkinSettings.end) document.getElementById('endTime').value = checkinSettings.end;
+            checkDeviceShortcut();
+        });
+
+        function saveAttendees() {
+            localStorage.setItem('summit_attendees', JSON.stringify(attendees));
+        }
+
+        function saveCheckinTimeSettings() {
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            checkinSettings = { start, end };
+            localStorage.setItem('summit_settings', JSON.stringify(checkinSettings));
+            showAlert('報到時間區間設定已成功儲存！');
+        }
+
+        function switchTab(tab) {
+            const checkinSec = document.getElementById('checkinSection');
+            const adminSec = document.getElementById('adminSection');
+            const navCheckinBtn = document.getElementById('navCheckinBtn');
+            const navAdminBtn = document.getElementById('navAdminBtn');
+
+            if (tab === 'checkin') {
+                checkinSec.classList.remove('hidden');
+                adminSec.classList.add('hidden');
+                navCheckinBtn.className = "px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow";
+                navAdminBtn.className = "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow";
+            } else {
+                checkinSec.classList.add('hidden');
+                adminSec.classList.remove('hidden');
+                navCheckinBtn.className = "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow";
+                navAdminBtn.className = "px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow";
+            }
+            hideAlert();
+            document.getElementById('reopenCardContainer').classList.add('hidden');
+            checkDeviceShortcut();
+        }
+
+        function showAlert(message, type = 'success') {
+            const box = document.getElementById('alertBox');
+            box.textContent = message;
+            box.className = `mb-6 p-4 rounded-lg text-sm font-medium border transition-all ${
+                type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`;
+            box.classList.remove('hidden');
+            setTimeout(() => {
+                box.classList.add('hidden');
+            }, 4000);
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').classList.add('hidden');
+        }
+
+        function maskName(name) {
+            if (!name) return '';
+            const len = name.length;
+            if (len === 2) {
+                return name[0] + 'O';
+            } else if (len === 3) {
+                return name[0] + 'O' + name[2];
+            } else if (len === 4) {
+                return name[0] + 'OO' + name[3];
+            } else if (len > 4) {
+                return name[0] + 'O'.repeat(len - 2) + name[len - 1];
+            }
+            return name;
+        }
+
+        let lastCheckedBadge = '';
+
+        // 智慧判斷：單人顯示按鈕，複數顯示專區清單
+        function checkDeviceShortcut() {
+            const singleBox = document.getElementById('singleDeviceCardShortcut');
+            const multiBox = document.getElementById('multiDeviceCardShortcut');
+            const singleBadgeText = document.getElementById('singleBadgeText');
+            const listContainer = document.getElementById('shortcutListContainer');
+            
+            listContainer.innerHTML = '';
+
+            // 確保這些編號在總名單中確實是已報到狀態
+            myDeviceBadges = myDeviceBadges.filter(b => {
+                const found = attendees.find(a => a.badgeNo === b && a.isCheckedIn);
+                return found;
+            });
+            localStorage.setItem('my_device_badges', JSON.stringify(myDeviceBadges));
+
+            if (myDeviceBadges.length === 1) {
+                // 單人模式：顯示「顯示報到卡片」按鈕
+                singleBadgeText.textContent = myDeviceBadges[0];
+                singleBox.classList.remove('hidden');
+                multiBox.classList.add('hidden');
+            } else if (myDeviceBadges.length > 1) {
+                // 複數模式：顯示「支援複數人員卡片的快速叫出專區」
+                myDeviceBadges.forEach(badgeNo => {
+                    const attendeeObj = attendees.find(a => a.badgeNo === badgeNo);
+                    const displayName = attendeeObj ? `${badgeNo} (${attendeeObj.maskedName})` : badgeNo;
+                    
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow-sm";
+                    btn.textContent = displayName;
+                    btn.onclick = () => showCardModal(badgeNo);
+                    listContainer.appendChild(btn);
+                });
+                multiBox.classList.remove('hidden');
+                singleBox.classList.add('hidden');
+            } else {
+                singleBox.classList.add('hidden');
+                multiBox.classList.add('hidden');
+            }
+        }
+
+        function showSingleDeviceCard() {
+            if (myDeviceBadges.length === 1) {
+                showCardModal(myDeviceBadges[0]);
+            }
+        }
+
+        function addDeviceBadge(badgeNo) {
+            if (!myDeviceBadges.includes(badgeNo)) {
+                myDeviceBadges.push(badgeNo);
+                localStorage.setItem('my_device_badges', JSON.stringify(myDeviceBadges));
+            }
+            checkDeviceShortcut();
+        }
+
+        function handleCheckin(e) {
+            e.preventDefault();
+
+            const now = new Date();
+            if (checkinSettings.start && now < new Date(checkinSettings.start)) {
+                showAlert('報到時間尚未開始！', 'error');
+                return;
+            }
+            if (checkinSettings.end && now > new Date(checkinSettings.end)) {
+                showAlert('報到時間已截止！', 'error');
+                return;
+            }
+
+            const badgeNo = document.getElementById('badgeNo').value.trim();
+            const fullNameInput = document.getElementById('fullName').value.trim();
+            const maskedInputName = maskName(fullNameInput);
+            
+            const lunch = document.querySelector('input[name="lunch"]:checked').value;
+            const creditCheckboxes = document.querySelectorAll('input[name="credits"]:checked');
+            const creditsArr = Array.from(creditCheckboxes).map(cb => cb.value);
+            const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
+
+            if (attendees.length === 0) {
+                showAlert('目前系統尚未載入與會人員名單，請先至後台匯入名單！', 'error');
+                return;
+            }
+
+            let target = attendees.find(item => item.badgeNo === badgeNo);
+            
+            if (!target) {
+                showAlert('找不到此大會編號，請確認編號是否正確！', 'error');
+                document.getElementById('reopenCardContainer').classList.add('hidden');
+                return;
+            }
+
+            if (target.maskedName !== maskedInputName) {
+                showAlert('大會編號與輸入的姓名不符，請重新確認！', 'error');
+                document.getElementById('reopenCardContainer').classList.add('hidden');
+                return;
+            }
+
+            if (target.isCheckedIn) {
+                lastCheckedBadge = badgeNo;
+                addDeviceBadge(badgeNo);
+                showAlert('此大會編號已經完成報到！您可透過下方按鈕重新顯示卡片。', 'error');
+                document.getElementById('reopenCardContainer').classList.remove('hidden');
+                return;
+            }
+
+            target.isCheckedIn = true;
+            target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
+            target.lunch = lunch;
+            target.credits = creditsStr;
+            saveAttendees();
+
+            lastCheckedBadge = badgeNo;
+            addDeviceBadge(badgeNo);
+
+            document.getElementById('reopenCardContainer').classList.add('hidden');
+            showCardModal(badgeNo);
+            document.getElementById('checkinForm').reset();
+            renderTable();
+        }
+
+        function reopenExistingCard() {
+            if (lastCheckedBadge) {
+                showCardModal(lastCheckedBadge);
+            }
+        }
+
+        function showCardModal(badgeNo) {
+            document.getElementById('modalBadgeNo').textContent = badgeNo;
+            document.getElementById('cardModal').classList.remove('hidden');
+            document.getElementById('cardModal').classList.add('flex');
+        }
+
+        function closeCardModal() {
+            document.getElementById('cardModal').classList.add('hidden');
+            document.getElementById('cardModal').classList.remove('flex');
+        }
+
+        // 後台登入驗證（採用字串反轉比對法：帳號，密碼）
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('adminUser').value.trim();
+            const pass = document.getElementById('adminPass').value.trim();
+
+            const isValidUser = user.split('').reverse().join('') === 'naelwt';
+            const isValidPass = pass.split('').reverse().join('') === '!00035552nael';
+
+            if (isValidUser && isValidPass) {
+                document.getElementById('adminLoginCard').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                showAlert('後台登入成功！');
+                renderTable();
+            } else {
+                showAlert('帳號或密碼錯誤！', 'error');
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('adminLoginCard').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+            showAlert('已安全登出後台。');
+        }
+
+        function openManualModal() {
+            document.getElementById('manualModal').classList.remove('hidden');
+            document.getElementById('manualModal').classList.add('flex');
+        }
+        function closeManualModal() {
+            document.getElementById('manualModal').classList.add('hidden');
+            document.getElementById('manualModal').classList.remove('flex');
+            document.getElementById('manualForm').reset();
+        }
+
+        function handleManualAdd(e) {
+            e.preventDefault();
+            const badgeNo = document.getElementById('manualBadge').value.trim();
+            const fullName = document.getElementById('manualName').value.trim();
+
+            if (attendees.some(item => item.badgeNo === badgeNo)) {
+                showAlert('此大會編號已存在名單中！', 'error');
+                return;
+            }
+
+            attendees.push({
+                badgeNo: badgeNo,
+                fullName: fullName,
+                maskedName: maskName(fullName),
+                isCheckedIn: false,
+                checkinTime: '未報到',
+                lunch: '未填寫',
+                credits: '未填寫'
+            });
+
+            saveAttendees();
+            closeManualModal();
+            renderTable();
+            showAlert(`已成功手動加入與會人員：${maskName(fullName)}`);
+        }
+
+        function importCSV(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const text = event.target.result;
+                const lines = text.split(/\r\n|\n/);
+                let count = 0;
+
+                lines.forEach(line => {
+                    if (!line.trim()) return;
+                    const cols = line.split(',');
+                    if (cols.length >= 2) {
+                        const badgeNo = cols[0].trim();
+                        const fullName = cols[1].trim();
+                        
+                        if (!attendees.some(a => a.badgeNo === badgeNo)) {
+                            attendees.push({
+                                badgeNo: badgeNo,
+                                fullName: fullName,
+                                maskedName: maskName(fullName),
+                                isCheckedIn: false,
+                                checkinTime: '未報到',
+                                lunch: '未填寫',
+                                credits: '未填寫'
+                            });
+                            count++;
+                        }
+                    }
+                });
+                saveAttendees();
+                renderTable();
+                showAlert(`成功匯入 ${count} 筆與會人員名單！`);
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function exportCheckedInCSV() {
+            const checkedInList = attendees.filter(a => a.isCheckedIn);
+            if (checkedInList.length === 0) {
+                showAlert('目前尚無已報到的人員名單可供匯出！', 'error');
+                return;
+            }
+
+            let csvContent = "\uFEFF大會編號,完整姓名,報到時間,午餐選項,教育積分需求\n";
+            checkedInList.forEach(item => {
+                csvContent += `${item.badgeNo},${item.fullName},${item.checkinTime},${item.lunch},"${item.credits}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `已報到人員名單_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showAlert('已成功匯出已報到人員清單！');
+        }
+
+        function toggleCheckinStatus(badgeNo) {
+            const target = attendees.find(a => a.badgeNo === badgeNo);
+            if (target) {
+                target.isCheckedIn = !target.isCheckedIn;
+                if (target.isCheckedIn) {
+                    target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
+                    addDeviceBadge(badgeNo);
+                } else {
+                    target.checkinTime = '未報到';
+                    target.lunch = '未填寫';
+                    target.credits = '未填寫';
+                }
+                saveAttendees();
+                renderTable();
+                showAlert(`已更新編號 ${badgeNo} 的報到狀態。`);
+                checkDeviceShortcut();
+            }
+        }
+
+        function viewCard(badgeNo) {
+            showCardModal(badgeNo);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('rosterTableBody');
+            tbody.innerHTML = '';
+            
+            document.getElementById('recordCount').textContent = `總計：${attendees.length} 筆`;
+
+            if (attendees.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-sm">目前尚無與會人員資料，請透過上方按鈕匯入或手動鍵入。</td></tr>`;
+                return;
+            }
+
+            attendees.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 sm:p-4 font-mono font-medium text-slate-700">${item.badgeNo}</td>
+                    <td class="p-3 sm:p-4 text-slate-800 font-medium">${item.maskedName}</td>
+                    <td class="p-3 sm:p-4">
+                        ${item.isCheckedIn 
+                            ? '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold">已報到</span>' 
+                            : '<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold">未報到</span>'}
+                    </td>
+                    <td class="p-3 sm:p-4 text-slate-600 text-xs font-mono">${item.checkinTime || '未報到'}</td>
+                    <td class="p-3 sm:p-4 text-slate-600 text-xs">${item.lunch}</td>
+                    <td class="p-3 sm:p-4 text-slate-600 text-xs">${item.credits}</td>
+                    <td class="p-3 sm:p-4 text-center space-x-1">
+                        ${item.isCheckedIn ? `<button onclick="viewCard('${item.badgeNo}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-medium transition">檢視卡片</button>` : ''}
+                        <button onclick="toggleCheckinStatus('${item.badgeNo}')" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-medium transition">
+                            ${item.isCheckedIn ? '取消報到' : '設為已報到'}
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
