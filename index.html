@@ -339,10 +339,7 @@
 
         async function fetchCloudAttendees() {
             try {
-                const res = await fetch('attendees.json?t=' + new Date().getTime(), {
-                    cache: 'no-store',
-                    headers: { 'Cache-Control': 'no-cache' }
-                });
+                const res = await fetch('attendees.json?t=' + new Date().getTime());
                 if (!res.ok) throw new Error('無法載入名單');
                 const data = await res.json();
                 cachedAttendees = Array.isArray(data) ? data : [];
@@ -353,7 +350,7 @@
             }
         }
 
-        // 升級版帶詳細錯誤攔截的 GitHub 寫入函數
+        // 已移除會引發 CORS 衝突的 Cache-Control 標頭
         async function pushCloudAttendees(updatedAttendees) {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
                 alert('【錯誤】尚未在後台設定 GitHub 帳號、Repo 與 Token！');
@@ -364,12 +361,10 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
-                // 1. 取得最新 SHA
-                const getRes = await fetch(apiUrl + '?t=' + new Date().getTime(), {
-                    cache: 'no-store',
+                // 1. 取得最新 SHA（使用合規的標準標頭）
+                const getRes = await fetch(apiUrl, {
                     headers: { 
                         'Authorization': `token ${ghSettings.token}`,
-                        'Cache-Control': 'no-cache',
                         'Accept': 'application/vnd.github.v3+json'
                     }
                 });
@@ -409,7 +404,7 @@
                 }
             } catch (err) {
                 console.error('GitHub 寫入失敗細節:', err);
-                alert('【雲端同步失敗詳細原因】\n' + err.message + '\n\n請檢查 F12 主控台或確認 Token 權限。');
+                alert('【雲端同步失敗詳細原因】\n' + err.message);
                 return false;
             }
         }
