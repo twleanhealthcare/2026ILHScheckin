@@ -11,7 +11,7 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         #modalBadgeNo {
-            font-size: clamp(6rem, 25vw, 14rem);
+            font-size: clamp(5rem, 20vw, 12rem);
             line-height: 0.85;
         }
     </style>
@@ -26,10 +26,10 @@
                 <p class="text-xs text-blue-200">Lean International Medical Summit 2026</p>
             </div>
             <div class="flex bg-blue-950/50 p-1 rounded-xl shadow-inner border border-blue-800/50">
-                <button id="navCheckinBtn" onclick="switchTab('checkin')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-white text-[#0F348D]">
+                <button type="button" id="navCheckinBtn" onclick="switchTab('checkin')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-white text-[#0F348D]">
                     與會者報到
                 </button>
-                <button id="navAdminBtn" onclick="switchTab('admin')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-blue-100 hover:text-white">
+                <button type="button" id="navAdminBtn" onclick="switchTab('admin')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-blue-100 hover:text-white">
                     後台管理
                 </button>
             </div>
@@ -166,7 +166,7 @@
                         </div>
                     </div>
                     <div class="flex justify-end pt-2">
-                        <button onclick="saveGitHubSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存雲端設定</button>
+                        <button type="button" onclick="saveGitHubSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存雲端設定</button>
                     </div>
                 </div>
 
@@ -187,7 +187,7 @@
                         </div>
                     </div>
                     <div class="flex justify-end pt-2">
-                        <button onclick="saveCheckinTimeSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存時間設定</button>
+                        <button type="button" onclick="saveCheckinTimeSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存時間設定</button>
                     </div>
                 </div>
 
@@ -197,20 +197,20 @@
                         <span class="font-extrabold text-[#0F348D] text-base">管理員控制台</span>
                     </div>
                     <div class="flex flex-wrap gap-2.5 w-full md:w-auto justify-end">
-                        <button onclick="renderTable()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
+                        <button type="button" onclick="renderTable()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
                             🔄 重新載入雲端名單
                         </button>
                         <label class="cursor-pointer px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
                             📂 匯入 CSV
                             <input type="file" id="csvFile" accept=".csv" onchange="importCSV(event)" class="hidden">
                         </label>
-                        <button onclick="openManualModal()" class="px-4 py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
+                        <button type="button" onclick="openManualModal()" class="px-4 py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
                             ➕ 手動新增
                         </button>
-                        <button onclick="exportCheckedInCSV()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
+                        <button type="button" onclick="exportCheckedInCSV()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
                             📥 匯出已報到
                         </button>
-                        <button onclick="handleLogout()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow">
+                        <button type="button" onclick="handleLogout()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow">
                             登出
                         </button>
                     </div>
@@ -264,7 +264,7 @@
                 <div class="bg-white text-[#0F348D] py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
                     ⚠️ 請向櫃台出示此畫面領取大會資料袋
                 </div>
-                <button onclick="closeCardModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider">
+                <button type="button" onclick="closeCardModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider">
                     確認並關閉畫面
                 </button>
             </div>
@@ -299,30 +299,45 @@
 
     <!-- JavaScript 邏輯區 -->
     <script>
-        let checkinSettings = JSON.parse(localStorage.getItem('summit_settings')) || { start: '', end: '' };
-        let ghSettings = JSON.parse(localStorage.getItem('summit_gh_settings')) || { owner: '', repo: '', token: '' };
-        let cachedAttendees = []; // 本地暫存記憶體，用於寫入後立刻更新畫面，不需等待 GitHub 緩慢的 CDN 更新
+        let checkinSettings = { start: '', end: '' };
+        let ghSettings = { owner: '', repo: '', token: '' };
+        let cachedAttendees = [];
+        let lastCheckedBadge = '';
 
+        // 初始化安全載入
         window.addEventListener('DOMContentLoaded', () => {
-            if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
-            if (checkinSettings.end) document.getElementById('endTime').value = checkinSettings.end;
-            
-            if (ghSettings.owner) document.getElementById('ghOwner').value = ghSettings.owner;
-            if (ghSettings.repo) document.getElementById('ghRepo').value = ghSettings.repo;
-            if (ghSettings.token) document.getElementById('ghToken').value = ghSettings.token;
+            try {
+                const savedSettings = localStorage.getItem('summit_settings');
+                if (savedSettings) checkinSettings = JSON.parse(savedSettings);
+
+                const savedGh = localStorage.getItem('summit_gh_settings');
+                if (savedGh) ghSettings = JSON.parse(savedGh);
+
+                if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
+                if (checkinSettings.end) document.getElementById('endTime').value = checkinSettings.end;
+                
+                if (ghSettings.owner) document.getElementById('ghOwner').value = ghSettings.owner;
+                if (ghSettings.repo) document.getElementById('ghRepo').value = ghSettings.repo;
+                if (ghSettings.token) document.getElementById('ghToken').value = ghSettings.token;
+            } catch (e) {
+                console.error("Initialization error:", e);
+            }
         });
 
         function saveGitHubSettings() {
-            ghSettings = {
-                owner: document.getElementById('ghOwner').value.trim(),
-                repo: document.getElementById('ghRepo').value.trim(),
-                token: document.getElementById('ghToken').value.trim()
-            };
-            localStorage.setItem('summit_gh_settings', JSON.stringify(ghSettings));
-            showAlert('GitHub 雲端設定已成功儲存！');
+            try {
+                ghSettings = {
+                    owner: document.getElementById('ghOwner').value.trim(),
+                    repo: document.getElementById('ghRepo').value.trim(),
+                    token: document.getElementById('ghToken').value.trim()
+                };
+                localStorage.setItem('summit_gh_settings', JSON.stringify(ghSettings));
+                showAlert('GitHub 雲端設定已成功儲存！', 'success');
+            } catch (e) {
+                showAlert('儲存設定失敗', 'error');
+            }
         }
 
-        // 強制加上時間戳記 (Cache-busting) 繞過 GitHub 伺服器快取
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch('attendees.json?t=' + new Date().getTime(), {
@@ -331,11 +346,11 @@
                 });
                 if (!res.ok) throw new Error('無法載入名單');
                 const data = await res.json();
-                cachedAttendees = data;
-                return data;
+                cachedAttendees = Array.isArray(data) ? data : [];
+                return cachedAttendees;
             } catch (err) {
-                console.error(err);
-                return cachedAttendees.length > 0 ? cachedAttendees : [];
+                console.warn('無法從遠端載入，使用暫存', err);
+                return cachedAttendees;
             }
         }
 
@@ -349,7 +364,6 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
-                // 取得最新的 SHA 避免衝突
                 const getRes = await fetch(apiUrl + '?t=' + new Date().getTime(), {
                     cache: 'no-store',
                     headers: { 
@@ -382,7 +396,7 @@
                 });
 
                 if (putRes.ok) {
-                    cachedAttendees = updatedAttendees; // 同步更新本地記憶體，確保畫面立刻反應
+                    cachedAttendees = updatedAttendees;
                     return true;
                 } else {
                     const errJson = await putRes.json();
@@ -396,11 +410,15 @@
         }
 
         function saveCheckinTimeSettings() {
-            const start = document.getElementById('startTime').value;
-            const end = document.getElementById('endTime').value;
-            checkinSettings = { start, end };
-            localStorage.setItem('summit_settings', JSON.stringify(checkinSettings));
-            showAlert('報到時間區間設定已成功儲存！');
+            try {
+                const start = document.getElementById('startTime').value;
+                const end = document.getElementById('endTime').value;
+                checkinSettings = { start, end };
+                localStorage.setItem('summit_settings', JSON.stringify(checkinSettings));
+                showAlert('報到時間區間設定已成功儲存！', 'success');
+            } catch (e) {
+                showAlert('儲存時間失敗', 'error');
+            }
         }
 
         function switchTab(tab) {
@@ -427,6 +445,7 @@
 
         function showAlert(message, type = 'success') {
             const box = document.getElementById('alertBox');
+            if (!box) return;
             box.textContent = message;
             box.className = `p-4 rounded-xl text-sm font-medium border shadow-sm transition-all duration-300 ${
                 type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
@@ -436,7 +455,8 @@
         }
 
         function hideAlert() {
-            document.getElementById('alertBox').classList.add('hidden');
+            const box = document.getElementById('alertBox');
+            if (box) box.classList.add('hidden');
         }
 
         function maskName(name) {
@@ -448,8 +468,6 @@
             if (len > 4) return name[0] + 'O'.repeat(len - 2) + name[len - 1];
             return name;
         }
-
-        let lastCheckedBadge = '';
 
         async function handleCheckin(e) {
             e.preventDefault();
@@ -466,7 +484,12 @@
             const badgeNo = document.getElementById('badgeNo').value.trim();
             const fullNameInput = document.getElementById('fullName').value.trim();
             const maskedInputName = maskName(fullNameInput);
-            const lunch = document.querySelector('input[name="lunch"]:checked').value;
+            const lunchElem = document.querySelector('input[name="lunch"]:checked');
+            if (!lunchElem) {
+                showAlert('請選擇午餐需求！', 'error');
+                return;
+            }
+            const lunch = lunchElem.value;
             const creditCheckboxes = document.querySelectorAll('input[name="credits"]:checked');
             const creditsArr = Array.from(creditCheckboxes).map(cb => cb.value);
             const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
@@ -481,7 +504,7 @@
 
             let target = attendees.find(item => item.badgeNo === badgeNo);
             if (!target) {
-                showAlert('找不到此大會編號！若名單剛被管理員刪除或新增，請確認編號是否正確。', 'error');
+                showAlert('找不到此大會編號！請確認編號是否正確。', 'error');
                 document.getElementById('reopenCardContainer').classList.add('hidden');
                 return;
             }
@@ -516,7 +539,7 @@
             document.getElementById('reopenCardContainer').classList.add('hidden');
             showCardModal(badgeNo);
             document.getElementById('checkinForm').reset();
-            showAlert('🎉 報到成功！資料已同步至大會後台。');
+            showAlert('🎉 報到成功！資料已同步至大會後台。', 'success');
         }
 
         function reopenExistingCard() {
@@ -545,7 +568,7 @@
             if (isValidUser && isValidPass) {
                 document.getElementById('adminLoginCard').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
-                showAlert('後台登入成功！');
+                showAlert('後台登入成功！', 'success');
                 renderTable();
             } else {
                 showAlert('後台帳號或密碼錯誤！', 'error');
@@ -556,7 +579,7 @@
             document.getElementById('adminLoginCard').classList.remove('hidden');
             document.getElementById('adminDashboard').classList.add('hidden');
             document.getElementById('loginForm').reset();
-            showAlert('已安全登出後台。');
+            showAlert('已安全登出後台。', 'success');
         }
 
         function openManualModal() {
@@ -595,8 +618,8 @@
             const success = await pushCloudAttendees(attendees);
             if (success) {
                 closeManualModal();
-                renderTable(); // 立即重新渲染畫面
-                showAlert(`已成功新增「${fullName} (${badgeNo})」並即時同步至雲端！`);
+                renderTable();
+                showAlert(`已成功新增「${fullName} (${badgeNo})」並即時同步至雲端！`, 'success');
             }
         }
 
@@ -608,37 +631,42 @@
 
             const reader = new FileReader();
             reader.onload = async function(event) {
-                const text = event.target.result;
-                const lines = text.split(/\r\n|\n/);
-                let count = 0;
+                try {
+                    const text = event.target.result;
+                    const lines = text.split(/\r\n|\n/);
+                    let count = 0;
 
-                lines.forEach(line => {
-                    if (!line.trim()) return;
-                    const cols = line.split(',');
-                    if (cols.length >= 2) {
-                        const badgeNo = cols[0].trim();
-                        const fullName = cols[1].trim();
-                        
-                        if (!attendees.some(a => a.badgeNo === badgeNo)) {
-                            attendees.push({
-                                badgeNo: badgeNo,
-                                fullName: fullName,
-                                maskedName: maskName(fullName),
-                                isCheckedIn: false,
-                                checkinTime: '未報到',
-                                lunch: '未填寫',
-                                credits: '未填寫'
-                            });
-                            count++;
+                    lines.forEach(line => {
+                        if (!line.trim()) return;
+                        const cols = line.split(',');
+                        if (cols.length >= 2) {
+                            const badgeNo = cols[0].trim();
+                            const fullName = cols[1].trim();
+                            
+                            if (!attendees.some(a => a.badgeNo === badgeNo)) {
+                                attendees.push({
+                                    badgeNo: badgeNo,
+                                    fullName: fullName,
+                                    maskedName: maskName(fullName),
+                                    isCheckedIn: false,
+                                    checkinTime: '未報到',
+                                    lunch: '未填寫',
+                                    credits: '未填寫'
+                                });
+                                count++;
+                            }
                         }
-                    }
-                });
+                    });
 
-                showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
-                const success = await pushCloudAttendees(attendees);
-                if (success) {
-                    renderTable(); // 立即重新渲染畫面
-                    showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`);
+                    showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
+                    const success = await pushCloudAttendees(attendees);
+                    if (success) {
+                        renderTable();
+                        showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`, 'success');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showAlert('CSV 格式解析錯誤', 'error');
                 }
                 e.target.value = '';
             };
@@ -666,7 +694,7 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showAlert('已成功匯出已報到人員清單！');
+            showAlert('已成功匯出已報到人員清單！', 'success');
         }
 
         async function toggleCheckinStatus(badgeNo) {
@@ -685,8 +713,8 @@
                 }
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
-                    renderTable(); // 立即重新渲染畫面
-                    showAlert(`已更新編號 ${badgeNo} 的狀態並同步至雲端。`);
+                    renderTable();
+                    showAlert(`已更新編號 ${badgeNo} 的狀態並同步至雲端。`, 'success');
                 }
             }
         }
@@ -700,8 +728,8 @@
                 attendees = attendees.filter(a => a.badgeNo !== badgeNo);
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
-                    renderTable(); // 立即重新渲染畫面
-                    showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`);
+                    renderTable();
+                    showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`, 'success');
                 }
             }
         }
@@ -712,12 +740,14 @@
 
         async function renderTable() {
             const tbody = document.getElementById('rosterTableBody');
+            const countElem = document.getElementById('recordCount');
+            if (!tbody) return;
+
             tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">正在從 GitHub 雲端讀取即時名單...</td></tr>`;
 
             let attendees = await fetchCloudAttendees();
             tbody.innerHTML = '';
-            document.getElementById('recordCount`").textContent = `總計：${attendees.length} 筆`;
-            document.getElementById('recordCount').textContent = `總計：${attendees.length} 筆`;
+            if (countElem) countElem.textContent = `總計：${attendees.length} 筆`;
 
             if (attendees.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">目前無資料或無法連線雲端，請檢查上方 GitHub 設定。</td></tr>`;
