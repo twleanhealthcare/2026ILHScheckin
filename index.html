@@ -11,25 +11,25 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         #modalBadgeNo {
-            font-size: clamp(7rem, 30vw, 16rem);
+            font-size: clamp(6rem, 25vw, 14rem);
             line-height: 0.85;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between" oncontextmenu="return false;">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between antialiased" oncontextmenu="return false;">
 
-    <!-- 頁首 -->
-    <header class="bg-[#0F348D] text-white shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold tracking-wider text-center sm:text-left">2026精實國際醫療高峰會</h1>
-                <p class="text-xs text-blue-200 text-center sm:text-left">Lean International Medical Summit 2026</p>
+    <!-- 頂部導覽列 -->
+    <header class="bg-[#0F348D] text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="text-center sm:text-left">
+                <h1 class="text-lg sm:text-xl font-bold tracking-wider">2026精實國際醫療高峰會</h1>
+                <p class="text-xs text-blue-200">Lean International Medical Summit 2026</p>
             </div>
-            <div class="flex gap-2">
-                <button id="navCheckinBtn" onclick="switchTab('checkin')" class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow">
+            <div class="flex bg-blue-950/50 p-1 rounded-xl shadow-inner border border-blue-800/50">
+                <button id="navCheckinBtn" onclick="switchTab('checkin')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-white text-[#0F348D]">
                     與會者報到
                 </button>
-                <button id="navAdminBtn" onclick="switchTab('admin')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow">
+                <button id="navAdminBtn" onclick="switchTab('admin')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-blue-100 hover:text-white">
                     後台管理
                 </button>
             </div>
@@ -37,97 +37,81 @@
     </header>
 
     <!-- 主要內容區 -->
-    <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 w-full flex-grow space-y-6">
 
-        <!-- 訊息提示框 -->
-        <div id="alertBox" class="hidden mb-6 p-4 rounded-lg text-sm font-medium border transition-all"></div>
+        <!-- 全域提示訊息框 -->
+        <div id="alertBox" class="hidden p-4 rounded-xl text-sm font-medium border shadow-sm transition-all duration-300"></div>
 
         <!-- 區塊一：與會者報到頁面 -->
         <section id="checkinSection" class="space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-xl mx-auto space-y-6">
-                <div>
-                    <h2 class="text-lg font-bold text-[#0F348D] mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        線上報到填寫
-                    </h2>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-10 max-w-xl mx-auto space-y-6">
+                <div class="text-center pb-4 border-b border-slate-100">
+                    <h2 class="text-xl font-extrabold text-[#0F348D]">線上報到系統</h2>
+                    <p class="text-xs text-slate-500 mt-1">請填寫大會編號與完整姓名進行現場報到</p>
+                </div>
 
-                    <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">大會編號 <span class="text-red-500">*</span></label>
-                            <input type="text" id="badgeNo" required placeholder="例如：LIM2026-001" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">完整姓名 <span class="text-red-500">*</span></label>
-                            <input type="text" id="fullName" required placeholder="請輸入您的完整姓名" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">確認當日中午是否用餐 <span class="text-red-500">*</span></label>
-                            <div class="flex gap-6 mt-2">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="lunch" value="葷食" required class="text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">葷食</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="lunch" value="素食" class="text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">素食</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="lunch" value="不用餐" class="text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">不用餐</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">是否需要教育積分（可複選）</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
-                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                                    <input type="checkbox" name="credits" value="醫師(品質2.4)" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">醫師 (品質 2.4)</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                                    <input type="checkbox" name="credits" value="護理師(品質2.4)" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">護理師 (品質 2.4)</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                                    <input type="checkbox" name="credits" value="公務人員" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">公務人員</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-2.5 rounded border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                                    <input type="checkbox" name="credits" value="醫療品質協會" class="rounded text-[#0F348D] focus:ring-[#0F348D]">
-                                    <span class="text-sm">醫療品質協會</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-3 bg-[#0F348D] hover:bg-blue-900 text-white font-semibold rounded-lg transition shadow-md text-sm">
-                            確認送出並產生報到卡片
-                        </button>
-                    </form>
-
-                    <!-- 單人報到按鈕 -->
-                    <div id="singleDeviceCardShortcut" class="hidden mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-2">
-                        <p class="text-xs text-emerald-800 font-medium">✨ 本裝置已完成報到（編號：<span id="singleBadgeText" class="font-mono font-bold"></span>）</p>
-                        <button type="button" onclick="showSingleDeviceCard()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow">
-                            顯示報到卡片
-                        </button>
+                <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">大會編號 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="badgeNo" required placeholder="例如：LIM2026-001" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm font-mono bg-slate-50/50">
                     </div>
 
-                    <!-- 複數人員快速叫出專區 -->
-                    <div id="multiDeviceCardShortcut" class="hidden mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-3">
-                        <p class="text-xs text-emerald-800 font-bold text-center">✨ 本裝置已紀錄多筆報到卡片，請點擊對應人員顯示：</p>
-                        <div id="shortcutListContainer" class="flex flex-wrap gap-2 justify-center"></div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">完整姓名 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="fullName" required placeholder="請輸入您的完整姓名" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm bg-slate-50/50">
                     </div>
 
-                    <!-- 重複報到提示 -->
-                    <div id="reopenCardContainer" class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center space-y-2">
-                        <p class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！若不小心關閉畫面，可點擊下方按鈕重新顯示卡片。</p>
-                        <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition shadow">
-                            點此重新顯示您的報到卡片
-                        </button>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">當日中午是否用餐 <span class="text-rose-500">*</span></label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="radio" name="lunch" value="葷食" required class="text-[#0F348D] focus:ring-[#0F348D]">
+                                <span class="text-xs font-semibold text-slate-700">葷食</span>
+                            </label>
+                            <label class="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="radio" name="lunch" value="素食" class="text-[#0F348D] focus:ring-[#0F348D]">
+                                <span class="text-xs font-semibold text-slate-700">素食</span>
+                            </label>
+                            <label class="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="radio" name="lunch" value="不用餐" class="text-[#0F348D] focus:ring-[#0F348D]">
+                                <span class="text-xs font-semibold text-slate-700">不用餐</span>
+                            </label>
+                        </div>
                     </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">教育積分需求（可複選）</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="checkbox" name="credits" value="醫師(品質2.4)" class="rounded text-[#0F348D] focus:ring-[#0F348D] w-4 h-4">
+                                <span class="text-xs font-semibold text-slate-700">醫師 (品質 2.4)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="checkbox" name="credits" value="護理師(品質2.4)" class="rounded text-[#0F348D] focus:ring-[#0F348D] w-4 h-4">
+                                <span class="text-xs font-semibold text-slate-700">護理師 (品質 2.4)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="checkbox" name="credits" value="公務人員" class="rounded text-[#0F348D] focus:ring-[#0F348D] w-4 h-4">
+                                <span class="text-xs font-semibold text-slate-700">公務人員</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                                <input type="checkbox" name="credits" value="醫療品質協會" class="rounded text-[#0F348D] focus:ring-[#0F348D] w-4 h-4">
+                                <span class="text-xs font-semibold text-slate-700">醫療品質協會</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 bg-[#0F348D] hover:bg-blue-900 text-white font-bold rounded-xl transition shadow-md text-sm tracking-wide">
+                        確認送出並產生報到憑證
+                    </button>
+                </form>
+
+                <!-- 重複報到提示 -->
+                <div id="reopenCardContainer" class="hidden p-4 bg-blue-50 border border-blue-200 rounded-xl text-center space-y-2">
+                    <p class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！若需重新檢視憑證卡片，請點擊下方按鈕。</p>
+                    <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">
+                        重新顯示報到憑證
+                    </button>
                 </div>
             </div>
         </section>
@@ -135,117 +119,120 @@
         <!-- 區塊二：後台管理頁面 -->
         <section id="adminSection" class="hidden space-y-6">
             <!-- 登入卡片 -->
-            <div id="adminLoginCard" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-md mx-auto">
-                <h2 class="text-lg font-bold text-[#0F348D] mb-4 text-center">後台管理登入</h2>
+            <div id="adminLoginCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-md mx-auto space-y-6">
+                <div class="text-center">
+                    <h2 class="text-xl font-bold text-[#0F348D]">後台管理系統登入</h2>
+                    <p class="text-xs text-slate-400 mt-1">請輸入管理員帳號與密碼</p>
+                </div>
                 <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">帳號</label>
-                        <input type="text" id="adminUser" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">管理員帳號</label>
+                        <input type="text" id="adminUser" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">密碼</label>
-                        <input type="password" id="adminPass" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">管理員密碼</label>
+                        <input type="password" id="adminPass" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
                     </div>
-                    <button type="submit" class="w-full py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white font-semibold rounded-lg transition text-sm">
-                        登入後台
+                    <button type="submit" class="w-full py-3 bg-[#0F348D] hover:bg-blue-900 text-white font-bold rounded-xl transition text-sm shadow">
+                        安全登入後台
                     </button>
                 </form>
             </div>
 
             <!-- 登入後的控制面板 -->
             <div id="adminDashboard" class="hidden space-y-6">
-                <!-- GitHub 雲端自動同步設定卡片 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-3">
-                    <h3 class="font-bold text-[#0F348D] flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 10l5-5 5 5M12 5v15"></path></svg>
-                        GitHub 雲端同步與管理設定
-                    </h3>
-                    <p class="text-xs text-slate-500">請務必填寫此處，讓前後台能直接透過 GitHub API 進行即時雲端讀寫：</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- GitHub 雲端設定卡片 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-[#0F348D] flex items-center gap-2 text-base">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 10l5-5 5 5M12 5v15"></path></svg>
+                            GitHub 雲端儲存與同步設定
+                        </h3>
+                        <span class="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-full border border-emerald-200">即時連線</span>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">請確認以下參數正確，以便後台新增、刪除及前台報到能即時寫回 GitHub 倉庫中的 <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono">attendees.json</code>：</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">GitHub 帳號 (Owner)</label>
-                            <input type="text" id="ghOwner" placeholder="例如：yourname" class="w-full px-3 py-2 rounded border border-slate-300 text-xs outline-none">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">GitHub 帳號 (Owner)</label>
+                            <input type="text" id="ghOwner" placeholder="例如：yourname" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">倉庫名稱 (Repo)</label>
-                            <input type="text" id="ghRepo" placeholder="例如：summit-checkin" class="w-full px-3 py-2 rounded border border-slate-300 text-xs outline-none">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">倉庫名稱 (Repo)</label>
+                            <input type="text" id="ghRepo" placeholder="例如：summit-checkin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Personal Access Token</label>
-                            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full px-3 py-2 rounded border border-slate-300 text-xs outline-none">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Personal Access Token</label>
+                            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
                         </div>
                     </div>
-                    <div class="flex justify-end gap-2 pt-1">
-                        <button onclick="saveGitHubSettings()" class="px-3 py-1.5 bg-[#0F348D] hover:bg-blue-900 text-white rounded text-xs font-medium transition shadow">儲存雲端設定</button>
+                    <div class="flex justify-end pt-2">
+                        <button onclick="saveGitHubSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存雲端設定</button>
                     </div>
                 </div>
 
-                <!-- 報到時間設定 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
-                    <h3 class="font-bold text-[#0F348D] mb-3 flex items-center gap-2">
+                <!-- 報到時間區間設定 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+                    <h3 class="font-bold text-[#0F348D] flex items-center gap-2 text-base border-b border-slate-100 pb-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         報到時間區間設定
                     </h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">開始報到時間</label>
-                            <input type="datetime-local" id="startTime" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-[#0F348D]">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">開始報到時間</label>
+                            <input type="datetime-local" id="startTime" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">結束報到時間</label>
-                            <input type="datetime-local" id="endTime" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-[#0F348D]">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">結束報到時間</label>
+                            <input type="datetime-local" id="endTime" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
                         </div>
                     </div>
-                    <div class="mt-3 flex justify-end">
-                        <button onclick="saveCheckinTimeSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white rounded-lg text-xs font-medium transition shadow">
-                            儲存報到時間設定
-                        </button>
+                    <div class="flex justify-end pt-2">
+                        <button onclick="saveCheckinTimeSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存時間設定</button>
                     </div>
                 </div>
 
-                <!-- 操作選單列 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex items-center gap-3 w-full md:w-auto">
-                        <span class="font-bold text-[#0F348D]">管理員控制台</span>
-                        <span class="text-xs px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full font-medium">純雲端連線模式</span>
+                <!-- 後台操作工具列 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="font-extrabold text-[#0F348D] text-base">管理員控制台</span>
                     </div>
-                    <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
-                        <button onclick="forceRefreshCloudData()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
+                    <div class="flex flex-wrap gap-2.5 w-full md:w-auto justify-end">
+                        <button onclick="renderTable()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
                             🔄 重新載入雲端名單
                         </button>
-                        <label class="cursor-pointer px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
-                            📂 匯入名單 (CSV)
+                        <label class="cursor-pointer px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
+                            📂 匯入 CSV
                             <input type="file" id="csvFile" accept=".csv" onchange="importCSV(event)" class="hidden">
                         </label>
-                        <button onclick="openManualModal()" class="px-3.5 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
-                            ➕ 手動鍵入名單
+                        <button onclick="openManualModal()" class="px-4 py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
+                            ➕ 手動新增
                         </button>
-                        <button onclick="exportCheckedInCSV()" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow flex items-center gap-1.5">
-                            📥 匯出已報到名單
+                        <button onclick="exportCheckedInCSV()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow flex items-center gap-1.5">
+                            📥 匯出已報到
                         </button>
-                        <button onclick="handleLogout()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow">
+                        <button onclick="handleLogout()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow">
                             登出
                         </button>
                     </div>
                 </div>
 
-                <!-- 名單列表統計與表格 -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-700">與會人員暨報到勾稽清單 (即時雲端)</h3>
-                        <span id="recordCount" class="text-xs text-slate-500">總計：0 筆</span>
+                <!-- 勾稽清單表格 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-700 text-base">與會人員暨報到勾稽清單</h3>
+                        <span id="recordCount" class="text-xs px-3 py-1 bg-slate-100 text-slate-600 font-bold rounded-full">總計：0 筆</span>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
-                                <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
-                                    <th class="p-3 sm:p-4">大會編號</th>
-                                    <th class="p-3 sm:p-4">與會姓名 (去識別化)</th>
-                                    <th class="p-3 sm:p-4">報到狀態</th>
-                                    <th class="p-3 sm:p-4">報到時間</th>
-                                    <th class="p-3 sm:p-4">午餐需求</th>
-                                    <th class="p-3 sm:p-4">教育積分</th>
-                                    <th class="p-3 sm:p-4 text-center">操作</th>
+                                <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                                    <th class="p-4">大會編號</th>
+                                    <th class="p-4">與會姓名 (去識別化)</th>
+                                    <th class="p-4">報到狀態</th>
+                                    <th class="p-4">報到時間</th>
+                                    <th class="p-4">午餐需求</th>
+                                    <th class="p-4">教育積分</th>
+                                    <th class="p-4 text-center">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="rosterTableBody" class="divide-y divide-slate-100"></tbody>
@@ -257,64 +244,62 @@
 
     </main>
 
-    <!-- 報到成功卡片 Modal -->
+    <!-- 報到成功憑證卡片 Modal -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
-        <div class="bg-[#0F348D] text-white rounded-3xl p-6 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center transform transition-all border-4 border-white/20 flex flex-col justify-between" style="min-height: 560px;">
-            <div class="absolute -right-12 -bottom-12 w-56 h-56 bg-white/10 rounded-full pointer-events-none"></div>
-            <div class="space-y-1.5 pt-2">
-                <p class="text-base uppercase tracking-widest text-blue-200 font-bold">2026 精實國際醫療高峰會</p>
+        <div class="bg-[#0F348D] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center border-4 border-white/20 flex flex-col justify-between" style="min-height: 520px;">
+            <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/10 rounded-full pointer-events-none"></div>
+            <div class="space-y-2 pt-2">
+                <p class="text-xs sm:text-sm uppercase tracking-widest text-blue-200 font-bold">2026 精實國際醫療高峰會</p>
                 <div>
-                    <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-black rounded-full uppercase tracking-wider shadow">已完成報到</span>
+                    <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-extrabold rounded-full uppercase tracking-wider shadow">報到憑證已生效</span>
                 </div>
             </div>
-            <div class="my-auto py-2 w-full flex flex-col justify-center items-center">
-                <span class="block text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">大會報到編號</span>
+            <div class="my-auto py-4 w-full flex flex-col justify-center items-center">
+                <span class="block text-xs uppercase tracking-widest text-blue-100 font-semibold mb-3">您的專屬大會編號</span>
                 <div class="w-full flex justify-center items-center">
                     <span id="modalBadgeNo" class="font-mono font-black tracking-tight text-white drop-shadow-2xl"></span>
                 </div>
             </div>
             <div class="space-y-3 pb-1">
                 <div class="bg-white text-[#0F348D] py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
-                    ⚠️ 請至櫃台出示此畫面領取資料袋
+                    ⚠️ 請向櫃台出示此畫面領取大會資料袋
                 </div>
-                <button onclick="closeCardModal()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider">
+                <button onclick="closeCardModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider">
                     確認並關閉畫面
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- 手動新增 Modal -->
+    <!-- 手動新增人員 Modal -->
     <div id="manualModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-5">
             <h3 class="text-lg font-bold text-[#0F348D]">手動鍵入與會人員</h3>
             <form id="manualForm" onsubmit="handleManualAdd(event)" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">大會編號</label>
-                    <input type="text" id="manualBadge" required placeholder="例如：LIM2026-100" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">大會編號</label>
+                    <input type="text" id="manualBadge" required placeholder="例如：LIM2026-100" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">完整姓名</label>
-                    <input type="text" id="manualName" required placeholder="例如：陳大文" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">完整姓名</label>
+                    <input type="text" id="manualName" required placeholder="例如：陳大文" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeManualModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-medium transition">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white rounded-lg text-sm font-medium transition">新增</button>
+                <div class="flex justify-end gap-2.5 pt-2">
+                    <button type="button" onclick="closeManualModal()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold transition">取消</button>
+                    <button type="submit" class="px-4 py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition shadow">確認新增</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-8">
+    <!-- 頁尾 -->
+    <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-400 mt-12">
         © 2026 精實國際醫療高峰會 All Rights Reserved.
     </footer>
 
     <!-- JavaScript 邏輯區 -->
     <script>
         let checkinSettings = JSON.parse(localStorage.getItem('summit_settings')) || { start: '', end: '' };
-        let myDeviceBadges = JSON.parse(localStorage.getItem('my_device_badges')) || [];
-        
-        // 雲端設定讀取（若未設定則預設從專案根目錄讀取 attendees.json）
         let ghSettings = JSON.parse(localStorage.getItem('summit_gh_settings')) || { owner: '', repo: '', token: '' };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -333,10 +318,9 @@
                 token: document.getElementById('ghToken').value.trim()
             };
             localStorage.setItem('summit_gh_settings', JSON.stringify(ghSettings));
-            showAlert('GitHub 雲端連線設定已成功儲存！');
+            showAlert('GitHub 雲端設定已成功儲存！');
         }
 
-        // 從 GitHub 抓取最新遠端名單（絕不使用舊快取）
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch('attendees.json?' + new Date().getTime());
@@ -349,10 +333,9 @@
             }
         }
 
-        // 將完整名單強制寫回 GitHub 雲端
         async function pushCloudAttendees(updatedAttendees) {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
-                alert('【系統提示】尚未設定後台的 GitHub 雲端 Token，無法自動寫回雲端！請先登入後台完成 GitHub 雲端設定。');
+                alert('【錯誤】尚未在後台設定 GitHub 帳號、Repo 與 Token！無法寫入雲端。');
                 return false;
             }
 
@@ -368,6 +351,9 @@
                 if (getRes.ok) {
                     const fileData = await getRes.json();
                     sha = fileData.sha;
+                } else {
+                    const errData = await getRes.json();
+                    throw new Error(`讀取遠端檔案失敗: ${errData.message}`);
                 }
 
                 const jsonString = JSON.stringify(updatedAttendees, null, 2);
@@ -380,9 +366,9 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: 'Real-time checkin update via system',
+                        message: 'Update attendees via admin/checkin system',
                         content: base64Content,
-                        sha: sha ? sha : undefined
+                        sha: sha
                     })
                 });
 
@@ -390,19 +376,13 @@
                     return true;
                 } else {
                     const errJson = await putRes.json();
-                    throw new Error(errJson.message);
+                    throw new Error(`寫入 GitHub 失敗: ${errJson.message}`);
                 }
             } catch (err) {
-                console.error('GitHub 寫入失敗:', err);
+                console.error('GitHub 寫入失敗細節:', err);
+                alert('【雲端同步失敗】\n' + err.message);
                 return false;
             }
-        }
-
-        function forceRefreshCloudData() {
-            fetchCloudAttendees().then(data => {
-                renderTable();
-                showAlert(`已成功重新載入雲端名單，目前共 ${data.length} 筆。`);
-            });
         }
 
         function saveCheckinTimeSettings() {
@@ -422,13 +402,13 @@
             if (tab === 'checkin') {
                 checkinSec.classList.remove('hidden');
                 adminSec.classList.add('hidden');
-                navCheckinBtn.className = "px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow";
-                navAdminBtn.className = "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow";
+                navCheckinBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-white text-[#0F348D]";
+                navAdminBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-blue-100 hover:text-white";
             } else {
                 checkinSec.classList.add('hidden');
                 adminSec.classList.remove('hidden');
-                navCheckinBtn.className = "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow";
-                navAdminBtn.className = "px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow";
+                navCheckinBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-blue-100 hover:text-white";
+                navAdminBtn.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-white text-[#0F348D]";
                 renderTable();
             }
             hideAlert();
@@ -438,7 +418,7 @@
         function showAlert(message, type = 'success') {
             const box = document.getElementById('alertBox');
             box.textContent = message;
-            box.className = `mb-6 p-4 rounded-lg text-sm font-medium border transition-all ${
+            box.className = `p-4 rounded-xl text-sm font-medium border shadow-sm transition-all duration-300 ${
                 type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
             }`;
             box.classList.remove('hidden');
@@ -461,51 +441,6 @@
 
         let lastCheckedBadge = '';
 
-        function checkDeviceShortcut(attendees) {
-            const singleBox = document.getElementById('singleDeviceCardShortcut');
-            const multiBox = document.getElementById('multiDeviceCardShortcut');
-            const singleBadgeText = document.getElementById('singleBadgeText');
-            const listContainer = document.getElementById('shortcutListContainer');
-            
-            listContainer.innerHTML = '';
-            myDeviceBadges = myDeviceBadges.filter(b => attendees.some(a => a.badgeNo === b && a.isCheckedIn));
-            localStorage.setItem('my_device_badges', JSON.stringify(myDeviceBadges));
-
-            if (myDeviceBadges.length === 1) {
-                singleBadgeText.textContent = myDeviceBadges[0];
-                singleBox.classList.remove('hidden');
-                multiBox.classList.add('hidden');
-            } else if (myDeviceBadges.length > 1) {
-                myDeviceBadges.forEach(badgeNo => {
-                    const attendeeObj = attendees.find(a => a.badgeNo === badgeNo);
-                    const displayName = attendeeObj ? `${badgeNo} (${attendeeObj.maskedName})` : badgeNo;
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow-sm";
-                    btn.textContent = displayName;
-                    btn.onclick = () => showCardModal(badgeNo);
-                    listContainer.appendChild(btn);
-                });
-                multiBox.classList.remove('hidden');
-                singleBox.classList.add('hidden');
-            } else {
-                singleBox.classList.add('hidden');
-                multiBox.classList.add('hidden');
-            }
-        }
-
-        function showSingleDeviceCard() {
-            if (myDeviceBadges.length === 1) showCardModal(myDeviceBadges[0]);
-        }
-
-        function addDeviceBadge(badgeNo) {
-            if (!myDeviceBadges.includes(badgeNo)) {
-                myDeviceBadges.push(badgeNo);
-                localStorage.setItem('my_device_badges', JSON.stringify(myDeviceBadges));
-            }
-        }
-
-        // 核心：與會者線上報到（即時向雲端獲取最新名單進行校驗並寫回）
         async function handleCheckin(e) {
             e.preventDefault();
             const now = new Date();
@@ -526,59 +461,48 @@
             const creditsArr = Array.from(creditCheckboxes).map(cb => cb.value);
             const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
 
-            showAlert('正在連線雲端驗證報到身分...', 'success');
+            showAlert('正在連線雲端驗證與會身分...', 'success');
 
-            // 1. 強制直接抓取最新的雲端名單
             let attendees = await fetchCloudAttendees();
             if (attendees.length === 0) {
-                showAlert('目前無法連接雲端名單，請確認網路連線！', 'error');
+                showAlert('目前無法連線雲端名單，請確認網路或 GitHub 設定！', 'error');
                 return;
             }
 
-            // 2. 尋找該編號
             let target = attendees.find(item => item.badgeNo === badgeNo);
             if (!target) {
-                showAlert('找不到此大會編號！若您剛被新增或刪除，請重新整理頁面。', 'error');
+                showAlert('找不到此大會編號！若名單剛被管理員刪除或新增，請確認編號是否正確。', 'error');
                 document.getElementById('reopenCardContainer').classList.add('hidden');
                 return;
             }
 
-            // 3. 檢查姓名
             if (target.maskedName !== maskedInputName) {
                 showAlert('大會編號與輸入的姓名不符，請重新確認！', 'error');
                 document.getElementById('reopenCardContainer').classList.add('hidden');
                 return;
             }
 
-            // 4. 檢查是否重複報到
             if (target.isCheckedIn) {
                 lastCheckedBadge = badgeNo;
-                addDeviceBadge(badgeNo);
-                checkDeviceShortcut(attendees);
-                showAlert('此大會編號已經完成報到！您可透過下方按鈕重新顯示卡片。', 'error');
+                showAlert('此大會編號已經完成報到！您可以點擊下方按鈕重新檢視憑證。', 'error');
                 document.getElementById('reopenCardContainer').classList.remove('hidden');
                 return;
             }
 
-            // 5. 更新狀態
             target.isCheckedIn = true;
             target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
             target.lunch = lunch;
             target.credits = creditsStr;
 
-            // 6. 即時寫回 GitHub 雲端
-            showAlert('正在將您的報到結果寫入雲端...', 'success');
+            showAlert('正在將報到狀態同步寫入雲端...', 'success');
             const success = await pushCloudAttendees(attendees);
 
             if (!success) {
-                showAlert('報到寫入雲端失敗，請洽詢櫃台人員！', 'error');
+                showAlert('報到狀態寫入雲端失敗，請洽詢櫃台人員！', 'error');
                 return;
             }
 
             lastCheckedBadge = badgeNo;
-            addDeviceBadge(badgeNo);
-            checkDeviceShortcut(attendees);
-
             document.getElementById('reopenCardContainer').classList.add('hidden');
             showCardModal(badgeNo);
             document.getElementById('checkinForm').reset();
@@ -600,7 +524,6 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 後台登入驗證 (帳號 twlean，密碼 lean25553000!)
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('adminUser').value.trim();
@@ -615,7 +538,7 @@
                 showAlert('後台登入成功！');
                 renderTable();
             } else {
-                showAlert('帳號或密碼錯誤！', 'error');
+                showAlert('後台帳號或密碼錯誤！', 'error');
             }
         }
 
@@ -644,7 +567,7 @@
             let attendees = await fetchCloudAttendees();
 
             if (attendees.some(item => item.badgeNo === badgeNo)) {
-                showAlert('此大會編號已存在名單中！', 'error');
+                showAlert('此大會編號已存在雲端名單中！', 'error');
                 return;
             }
 
@@ -658,13 +581,12 @@
                 credits: '未填寫'
             });
 
+            showAlert('正在將新人員寫入雲端...', 'success');
             const success = await pushCloudAttendees(attendees);
             if (success) {
                 closeManualModal();
                 renderTable();
-                showAlert(`已成功手動新增「${maskName(fullName)}」並同步至雲端！`);
-            } else {
-                showAlert('新增失敗，請檢查 GitHub 雲端設定 Token 是否正確。', 'error');
+                showAlert(`已成功新增「${fullName} (${badgeNo})」並即時同步至雲端！`);
             }
         }
 
@@ -702,12 +624,11 @@
                     }
                 });
 
+                showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
                     renderTable();
-                    showAlert(`成功匯入 ${count} 筆人員並自動同步至雲端！`);
-                } else {
-                    showAlert('CSV 匯入同步雲端失敗，請檢查 Token。', 'error');
+                    showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`);
                 }
                 e.target.value = '';
             };
@@ -745,8 +666,8 @@
                 target.isCheckedIn = !target.isCheckedIn;
                 if (target.isCheckedIn) {
                     target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
-                    target.lunch = '後台勾稽';
-                    target.credits = '手動設定';
+                    target.lunch = '現場櫃台協助';
+                    target.credits = '人工勾稽';
                 } else {
                     target.checkinTime = '未報到';
                     target.lunch = '未填寫';
@@ -755,9 +676,7 @@
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
                     renderTable();
-                    showAlert(`已更新編號 ${badgeNo} 的報到狀態並同步至雲端。`);
-                } else {
-                    showAlert('更新失敗，請檢查雲端 Token。', 'error');
+                    showAlert(`已更新編號 ${badgeNo} 的狀態並同步至雲端。`);
                 }
             }
         }
@@ -767,14 +686,12 @@
             const target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
-            if (confirm(`【警告】確定要從雲端徹底刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？刪除後該人員將無法再進行報到！`)) {
+            if (confirm(`【警告】確定要從雲端徹底刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
                 attendees = attendees.filter(a => a.badgeNo !== badgeNo);
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
                     renderTable();
-                    showAlert(`已成功將編號 ${badgeNo} 從雲端刪除！`);
-                } else {
-                    showAlert('刪除同步失敗，請檢查 Token。', 'error');
+                    showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`);
                 }
             }
         }
@@ -783,40 +700,39 @@
             showCardModal(badgeNo);
         }
 
-        // 渲染後台表格（每次都即時從雲端撈取最新資料）
         async function renderTable() {
             const tbody = document.getElementById('rosterTableBody');
-            tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-sm">正在從雲端載入即時名單...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">正在從 GitHub 雲端讀取即時名單...</td></tr>`;
 
             let attendees = await fetchCloudAttendees();
             tbody.innerHTML = '';
             document.getElementById('recordCount').textContent = `總計：${attendees.length} 筆`;
 
             if (attendees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-sm">目前尚無與會人員資料或無法連線雲端。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">目前無資料或無法連線雲端，請檢查上方 GitHub 設定。</td></tr>`;
                 return;
             }
 
             attendees.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition";
+                tr.className = "hover:bg-slate-50/80 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-3 sm:p-4 font-mono font-medium text-slate-700">${item.badgeNo}</td>
-                    <td class="p-3 sm:p-4 text-slate-800 font-medium">${item.maskedName}</td>
-                    <td class="p-3 sm:p-4">
+                    <td class="p-4 font-mono font-bold text-slate-700">${item.badgeNo}</td>
+                    <td class="p-4 text-slate-800 font-medium">${item.maskedName}</td>
+                    <td class="p-4">
                         ${item.isCheckedIn 
-                            ? '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold">已報到</span>' 
-                            : '<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-semibold">未報到</span>'}
+                            ? '<span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">已報到</span>' 
+                            : '<span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">未報到</span>'}
                     </td>
-                    <td class="p-3 sm:p-4 text-slate-600 text-xs font-mono">${item.checkinTime || '未報到'}</td>
-                    <td class="p-3 sm:p-4 text-slate-600 text-xs">${item.lunch}</td>
-                    <td class="p-3 sm:p-4 text-slate-600 text-xs">${item.credits}</td>
-                    <td class="p-3 sm:p-4 text-center space-x-1 whitespace-nowrap">
-                        ${item.isCheckedIn ? `<button type="button" onclick="viewCard('${item.badgeNo}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-medium transition">檢視</button>` : ''}
-                        <button type="button" onclick="toggleCheckinStatus('${item.badgeNo}')" class="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-medium transition">
+                    <td class="p-4 text-slate-500 text-xs font-mono">${item.checkinTime || '未報到'}</td>
+                    <td class="p-4 text-slate-600 text-xs">${item.lunch}</td>
+                    <td class="p-4 text-slate-600 text-xs">${item.credits}</td>
+                    <td class="p-4 text-center space-x-1.5 whitespace-nowrap">
+                        ${item.isCheckedIn ? `<button type="button" onclick="viewCard('${item.badgeNo}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition shadow-sm">檢視</button>` : ''}
+                        <button type="button" onclick="toggleCheckinStatus('${item.badgeNo}')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition shadow-sm">
                             ${item.isCheckedIn ? '取消' : '設為已報到'}
                         </button>
-                        <button type="button" onclick="deleteAttendee('${item.badgeNo}')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-xs font-medium transition font-bold shadow-sm">刪除</button>
+                        <button type="button" onclick="deleteAttendee('${item.badgeNo}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold transition font-bold text-white shadow-sm">刪除</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
