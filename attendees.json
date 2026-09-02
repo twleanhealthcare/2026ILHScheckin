@@ -3,9 +3,9 @@
     "badgeNo": "LIM2026-001",
     "fullName": "測試人員",
     "maskedName": "測O員",
-    "isCheckedIn": false,
-    "checkinTime": "未報到",
-    "lunch": "未填寫",
-    "credits": "未填寫"
+    "isCheckedIn": true,
+    "checkinTime": "2026/9/2 14:28:14",
+    "lunch": "葷食",
+    "credits": "無"
   }
 ]
