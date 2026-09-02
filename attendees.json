@@ -7,5 +7,14 @@
     "checkinTime": "未報到",
     "lunch": "未填寫",
     "credits": "未填寫"
+  },
+  {
+    "badgeNo": "002",
+    "fullName": "張O薇",
+    "maskedName": "張O薇",
+    "isCheckedIn": false,
+    "checkinTime": "未報到",
+    "lunch": "未填寫",
+    "credits": "未填寫"
   }
 ]
