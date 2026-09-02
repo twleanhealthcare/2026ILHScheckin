@@ -318,15 +318,12 @@
         let attendees = [];
         let checkinSettings = JSON.parse(localStorage.getItem('summit_settings')) || { start: '', end: '' };
         let myDeviceBadges = JSON.parse(localStorage.getItem('my_device_badges')) || [];
-
-        // GitHub API 設定讀取
         let ghSettings = JSON.parse(localStorage.getItem('summit_gh_settings')) || { owner: '', repo: '', token: '' };
 
         window.addEventListener('DOMContentLoaded', () => {
             if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
             if (checkinSettings.end) document.getElementById('endTime').value = checkinSettings.end;
             
-            // 填入已儲存的 GitHub 設定
             if (ghSettings.owner) document.getElementById('ghOwner').value = ghSettings.owner;
             if (ghSettings.repo) document.getElementById('ghRepo').value = ghSettings.repo;
             if (ghSettings.token) document.getElementById('ghToken').value = ghSettings.token;
@@ -344,7 +341,6 @@
             showAlert('GitHub 雲端設定已儲存！');
         }
 
-        // 自動透過 GitHub API 同步更新 attendees.json
         async function syncToGitHub() {
             if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
                 showAlert('請先填寫並儲存 GitHub 帳號、倉庫名稱與 Token！', 'error');
@@ -357,21 +353,25 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
-                // 1. 先取得該檔案目前的 SHA (GitHub 更新檔案必須帶有原本的 SHA 才能覆蓋)
                 let sha = '';
                 const getRes = await fetch(apiUrl, {
                     headers: { 'Authorization': `token ${ghSettings.token}` }
                 });
+                
                 if (getRes.ok) {
                     const fileData = await getRes.json();
                     sha = fileData.sha;
+                } else if (getRes.status === 404) {
+                    // 若找不到檔案也沒關係，後面直接建立
+                    sha = '';
+                } else {
+                    const errData = await getRes.json();
+                    throw new Error(`讀取遠端檔案失敗 (${getRes.status}): ${errData.message}`);
                 }
 
-                // 2. 將目前的 attendees 陣列轉成 Base64 字串
                 const jsonString = JSON.stringify(attendees, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
 
-                // 3. 發送 PUT 請求寫回 GitHub
                 const putRes = await fetch(apiUrl, {
                     method: 'PUT',
                     headers: {
@@ -389,10 +389,11 @@
                     showAlert('🎉 成功同步更新至 GitHub 雲端！所有人重新整理即可看到最新名單。');
                 } else {
                     const errJson = await putRes.json();
-                    throw new Error(errJson.message || '更新失敗');
+                    throw new Error(`寫入 GitHub 失敗 (${putRes.status}): ${errJson.message}`);
                 }
             } catch (err) {
-                showAlert('同步失敗: ' + err.message, 'error');
+                alert('【同步失敗詳細原因】\n' + err.message);
+                showAlert('同步失敗，請看彈出視窗錯誤訊息', 'error');
             }
         }
 
@@ -458,7 +459,7 @@
                 type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
             }`;
             box.classList.remove('hidden');
-            setTimeout(() => { box.classList.add('hidden'); }, 5000);
+            setTimeout(() => { box.classList.add('hidden'); }, 6000);
         }
 
         function hideAlert() {
@@ -543,7 +544,7 @@
             const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
 
             if (attendees.length === 0) {
-                showAlert('目前系統尚未載入與會人員名單，請確認網路連線！', 'error');
+                showAlert('目前系統尚未載入與會人員名單！', 'error');
                 return;
             }
 
