@@ -1,11 +1,11 @@
 [
   {
-    "badgeNo": "001",
-    "fullName": "張O瑜",
-    "maskedName": "張O瑜",
-    "isCheckedIn": true,
-    "checkinTime": "2026/9/2 13:46:37",
-    "lunch": "素食",
-    "credits": "無"
+    "badgeNo": "LIM2026-001",
+    "fullName": "測試人員",
+    "maskedName": "測O員",
+    "isCheckedIn": false,
+    "checkinTime": "未報到",
+    "lunch": "未填寫",
+    "credits": "未填寫"
   }
 ]
