@@ -42,7 +42,7 @@
         <!-- 全域提示訊息框 -->
         <div id="alertBox" class="hidden p-4 rounded-xl text-sm font-medium border shadow-sm transition-all duration-300"></div>
 
-        <!-- 區塊一：與會者報到頁面（訪客端：完全免權杖、跨裝置即時同步） -->
+        <!-- 區塊一：與會者報到頁面（100% 免權杖、跨裝置即時同步） -->
         <section id="checkinSection" class="space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-10 max-w-xl mx-auto space-y-6">
                 <div class="text-center pb-4 border-b border-slate-100">
@@ -141,35 +141,6 @@
 
             <!-- 登入後的控制面板 -->
             <div id="adminDashboard" class="hidden space-y-6">
-                <!-- GitHub 雲端設定卡片（僅管理員需要設定一次） -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h3 class="font-bold text-[#0F348D] flex items-center gap-2 text-base">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 10l5-5 5 5M12 5v15"></path></svg>
-                            GitHub 雲端儲存與同步設定（僅管理員）
-                        </h3>
-                        <span class="text-xs px-2.5 py-1 bg-emerald-50 text-emerald-700 font-semibold rounded-full border border-emerald-200">後台專用通道</span>
-                    </div>
-                    <p class="text-xs text-slate-500 leading-relaxed">請確認以下參數正確，以便後台管理、新增、刪除及前台訪客免權杖自動同步至 <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono">attendees.json</code>：</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">GitHub 帳號 (Owner)</label>
-                            <input type="text" id="ghOwner" placeholder="例如：yourname" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">倉庫名稱 (Repo)</label>
-                            <input type="text" id="ghRepo" placeholder="例如：summit-checkin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Personal Access Token</label>
-                            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-[#0F348D] bg-slate-50/50">
-                        </div>
-                    </div>
-                    <div class="flex justify-end pt-2">
-                        <button type="button" onclick="saveGitHubSettings()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition shadow">儲存雲端設定</button>
-                    </div>
-                </div>
-
                 <!-- 報到時間區間設定 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
                     <h3 class="font-bold text-[#0F348D] flex items-center gap-2 text-base border-b border-slate-100 pb-3">
@@ -297,10 +268,12 @@
         © 2026 精實國際醫療高峰會 All Rights Reserved.
     </footer>
 
-    <!-- JavaScript 核心邏輯 -->
+    <!-- JavaScript 核心邏輯 (Google 試算表連動版) -->
     <script>
+        // 已自動帶入您的 Google Apps Script 部署網址
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygS1xCsG32PBsJm4FmlDMCieLOd9ecbvY96FfnYViBehrMyC_94hfe6XkE9_LGP_or/exec";
+
         let checkinSettings = { start: '', end: '' };
-        let ghSettings = { owner: '', repo: '', token: '' };
         let cachedAttendees = [];
         let lastCheckedBadge = '';
 
@@ -308,100 +281,44 @@
             try {
                 const savedSettings = localStorage.getItem('summit_settings');
                 if (savedSettings) checkinSettings = JSON.parse(savedSettings);
-
-                const savedGh = localStorage.getItem('summit_gh_settings');
-                if (savedGh) ghSettings = JSON.parse(savedGh);
-
                 if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
                 if (checkinSettings.end) document.getElementById('endTime').value = checkinSettings.end;
-                
-                if (ghSettings.owner) document.getElementById('ghOwner').value = ghSettings.owner;
-                if (ghSettings.repo) document.getElementById('ghRepo').value = ghSettings.repo;
-                if (ghSettings.token) document.getElementById('ghToken').value = ghSettings.token;
             } catch (e) {
                 console.error("Initialization error:", e);
             }
         });
 
-        function saveGitHubSettings() {
-            try {
-                ghSettings = {
-                    owner: document.getElementById('ghOwner').value.trim(),
-                    repo: document.getElementById('ghRepo').value.trim(),
-                    token: document.getElementById('ghToken').value.trim()
-                };
-                localStorage.setItem('summit_gh_settings', JSON.stringify(ghSettings));
-                showAlert('GitHub 雲端設定已成功儲存！', 'success');
-            } catch (e) {
-                showAlert('儲存設定失敗', 'error');
-            }
-        }
-
+        // 從 Google 試算表讀取名單
         async function fetchCloudAttendees() {
             try {
-                const res = await fetch('attendees.json?t=' + new Date().getTime());
-                if (!res.ok) throw new Error('無法載入名單');
+                const res = await fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime());
+                if (!res.ok) throw new Error('無法連線至 Google 試算表');
                 const data = await res.json();
                 cachedAttendees = Array.isArray(data) ? data : [];
                 return cachedAttendees;
             } catch (err) {
-                console.warn('無法從遠端載入，使用本地暫存', err);
+                console.warn('無法從雲端載入，使用本地暫存', err);
                 return cachedAttendees;
             }
         }
 
-        // 訪客免權杖：利用後台預存的 Token 在背景自動完成雲端同步
+        // 將整批名單同步寫回 Google 試算表
         async function pushCloudAttendees(updatedAttendees) {
-            if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
-                // 若後台尚未設定，退回純前端提示但仍可讓訪客完成報到憑證顯示
-                console.warn('尚未設定後台 GitHub 參數，改為本地模擬同步');
-                return true;
-            }
-
-            const filePath = 'attendees.json';
-            const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
-
             try {
-                const getRes = await fetch(apiUrl, {
-                    headers: { 
-                        'Authorization': `token ${ghSettings.token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                
-                if (!getRes.ok) {
-                    const errData = await getRes.json();
-                    throw new Error(`讀取遠端 SHA 失敗 [HTTP ${getRes.status}]: ${errData.message || '未知錯誤'}`);
-                }
-                const fileData = await getRes.json();
-                const currentSha = fileData.sha;
-
-                const jsonString = JSON.stringify(updatedAttendees, null, 2);
-                const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
-
-                const putRes = await fetch(apiUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${ghSettings.token}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/vnd.github.v3+json'
-                    },
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
-                        message: 'Update attendees via system',
-                        content: base64Content,
-                        sha: currentSha
+                        action: "syncAll",
+                        attendees: updatedAttendees
                     })
                 });
-
-                if (putRes.ok) {
-                    cachedAttendees = updatedAttendees;
-                    return true;
-                } else {
-                    const errJson = await putRes.json();
-                    throw new Error(`寫入 GitHub 失敗 [HTTP ${putRes.status}]: ${errJson.message || '未知錯誤'}`);
-                }
+                cachedAttendees = updatedAttendees;
+                return true;
             } catch (err) {
-                console.error('背景雲端同步失敗:', err);
+                console.error('Google 試算表寫入失敗細節:', err);
+                alert('【雲端同步失敗】\n' + err.message);
                 return false;
             }
         }
@@ -466,7 +383,7 @@
             return name;
         }
 
-        // 與會者前台報到（完全免權杖、跨裝置即時驗證與同步）
+        // 與會者前台報到（完全免權杖、多裝置即時同步）
         async function handleCheckin(e) {
             e.preventDefault();
             const now = new Date();
@@ -496,7 +413,7 @@
 
             let attendees = await fetchCloudAttendees();
             if (attendees.length === 0) {
-                showAlert('目前無法連線雲端名單，請確認網路連線！', 'error');
+                showAlert('目前無法連線雲端名單，請確認網路！', 'error');
                 return;
             }
 
@@ -525,14 +442,14 @@
             target.lunch = lunch;
             target.credits = creditsStr;
 
-            // 背景自動同步至雲端，訪客完全免權杖
+            showAlert('正在將報到狀態同步至雲端...', 'success');
             await pushCloudAttendees(attendees);
 
             lastCheckedBadge = badgeNo;
             document.getElementById('reopenCardContainer').classList.add('hidden');
             showCardModal(badgeNo);
             document.getElementById('checkinForm').reset();
-            showAlert('🎉 報到成功！憑證已生效。', 'success');
+            showAlert('🎉 報到成功！資料已即時同步至大會後台。', 'success');
         }
 
         function reopenExistingCard() {
@@ -612,10 +529,8 @@
             closeManualModal();
             showAlert(`正在將新人員「${fullName}」同步寫入雲端...`, 'success');
 
-            const success = await pushCloudAttendees(attendees);
-            if (success) {
-                showAlert(`已成功新增並同步至雲端！`, 'success');
-            }
+            await pushCloudAttendees(attendees);
+            showAlert(`已成功新增並同步至 Google 試算表！`, 'success');
         }
 
         async function importCSV(e) {
@@ -656,10 +571,8 @@
                     cachedAttendees = attendees;
                     renderTable();
                     showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
-                    const success = await pushCloudAttendees(attendees);
-                    if (success) {
-                        showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`, 'success');
-                    }
+                    await pushCloudAttendees(attendees);
+                    showAlert(`成功匯入 ${count} 筆人員並自動同步至 Google 試算表！`, 'success');
                 } catch (err) {
                     console.error(err);
                     showAlert('CSV 格式解析錯誤', 'error');
@@ -713,10 +626,8 @@
                 cachedAttendees = attendees;
                 renderTable();
 
-                const success = await pushCloudAttendees(attendees);
-                if (success) {
-                    showAlert(`已成功更新編號 ${badgeNo} 的勾稽狀態並同步至雲端！`, 'success');
-                }
+                await pushCloudAttendees(attendees);
+                showAlert(`已成功更新編號 ${badgeNo} 的勾稽狀態並同步至雲端！`, 'success');
             }
         }
 
@@ -731,10 +642,8 @@
                 renderTable();
 
                 showAlert(`正在從雲端徹底刪除編號 ${badgeNo}...`, 'success');
-                const success = await pushCloudAttendees(attendees);
-                if (success) {
-                    showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`, 'success');
-                }
+                await pushCloudAttendees(attendees);
+                showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`, 'success');
             }
         }
 
@@ -750,7 +659,7 @@
             if (cachedAttendees.length > 0) {
                 displayTableData(cachedAttendees);
             } else {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">正在從 GitHub 雲端讀取即時名單...</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">正在從 Google 試算表讀取即時名單...</td></tr>`;
             }
 
             let attendees = await fetchCloudAttendees();
@@ -766,7 +675,7 @@
             if (countElem) countElem.textContent = `總計：${attendees.length} 筆`;
 
             if (attendees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">目前無資料或無法連線雲端，請檢查上方 GitHub 設定。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-sm">目前無資料，請確認 Google 試算表內是否有填寫資料。</td></tr>`;
                 return;
             }
 
