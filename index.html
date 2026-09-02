@@ -301,6 +301,7 @@
     <script>
         let checkinSettings = JSON.parse(localStorage.getItem('summit_settings')) || { start: '', end: '' };
         let ghSettings = JSON.parse(localStorage.getItem('summit_gh_settings')) || { owner: '', repo: '', token: '' };
+        let cachedAttendees = []; // 本地暫存記憶體，用於寫入後立刻更新畫面，不需等待 GitHub 緩慢的 CDN 更新
 
         window.addEventListener('DOMContentLoaded', () => {
             if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
@@ -321,15 +322,20 @@
             showAlert('GitHub 雲端設定已成功儲存！');
         }
 
+        // 強制加上時間戳記 (Cache-busting) 繞過 GitHub 伺服器快取
         async function fetchCloudAttendees() {
             try {
-                const res = await fetch('attendees.json?' + new Date().getTime());
+                const res = await fetch('attendees.json?t=' + new Date().getTime(), {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
                 if (!res.ok) throw new Error('無法載入名單');
                 const data = await res.json();
+                cachedAttendees = data;
                 return data;
             } catch (err) {
                 console.error(err);
-                return [];
+                return cachedAttendees.length > 0 ? cachedAttendees : [];
             }
         }
 
@@ -343,18 +349,21 @@
             const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
 
             try {
-                let sha = '';
-                const getRes = await fetch(apiUrl, {
-                    headers: { 'Authorization': `token ${ghSettings.token}` }
+                // 取得最新的 SHA 避免衝突
+                const getRes = await fetch(apiUrl + '?t=' + new Date().getTime(), {
+                    cache: 'no-store',
+                    headers: { 
+                        'Authorization': `token ${ghSettings.token}`,
+                        'Cache-Control': 'no-cache'
+                    }
                 });
                 
-                if (getRes.ok) {
-                    const fileData = await getRes.json();
-                    sha = fileData.sha;
-                } else {
+                if (!getRes.ok) {
                     const errData = await getRes.json();
                     throw new Error(`讀取遠端檔案失敗: ${errData.message}`);
                 }
+                const fileData = await getRes.json();
+                const sha = fileData.sha;
 
                 const jsonString = JSON.stringify(updatedAttendees, null, 2);
                 const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
@@ -373,6 +382,7 @@
                 });
 
                 if (putRes.ok) {
+                    cachedAttendees = updatedAttendees; // 同步更新本地記憶體，確保畫面立刻反應
                     return true;
                 } else {
                     const errJson = await putRes.json();
@@ -585,7 +595,7 @@
             const success = await pushCloudAttendees(attendees);
             if (success) {
                 closeManualModal();
-                renderTable();
+                renderTable(); // 立即重新渲染畫面
                 showAlert(`已成功新增「${fullName} (${badgeNo})」並即時同步至雲端！`);
             }
         }
@@ -627,7 +637,7 @@
                 showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
-                    renderTable();
+                    renderTable(); // 立即重新渲染畫面
                     showAlert(`成功匯入 ${count} 筆人員並自動同步至 GitHub 雲端！`);
                 }
                 e.target.value = '';
@@ -675,7 +685,7 @@
                 }
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
-                    renderTable();
+                    renderTable(); // 立即重新渲染畫面
                     showAlert(`已更新編號 ${badgeNo} 的狀態並同步至雲端。`);
                 }
             }
@@ -690,7 +700,7 @@
                 attendees = attendees.filter(a => a.badgeNo !== badgeNo);
                 const success = await pushCloudAttendees(attendees);
                 if (success) {
-                    renderTable();
+                    renderTable(); // 立即重新渲染畫面
                     showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`);
                 }
             }
@@ -706,6 +716,7 @@
 
             let attendees = await fetchCloudAttendees();
             tbody.innerHTML = '';
+            document.getElementById('recordCount`").textContent = `總計：${attendees.length} 筆`;
             document.getElementById('recordCount').textContent = `總計：${attendees.length} 筆`;
 
             if (attendees.length === 0) {
