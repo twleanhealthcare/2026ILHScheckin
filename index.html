@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026精實國際醫療高峰會線上報到系統</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-        /* 極致放大編號號碼，支援三位數完美自適應不換行 */
         #modalBadgeNo {
             font-size: clamp(7rem, 30vw, 16rem);
             line-height: 0.85;
@@ -18,6 +18,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between" oncontextmenu="return false;">
 
+    <!-- 頁首 -->
     <header class="bg-[#0F348D] text-white shadow-md">
         <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <div>
@@ -35,10 +36,13 @@
         </div>
     </header>
 
+    <!-- 主要內容區 -->
     <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
 
+        <!-- 訊息提示框 -->
         <div id="alertBox" class="hidden mb-6 p-4 rounded-lg text-sm font-medium border transition-all"></div>
 
+        <!-- 區塊一：與會者報到頁面 -->
         <section id="checkinSection" class="space-y-6">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-xl mx-auto space-y-6">
                 <div>
@@ -103,6 +107,7 @@
                         </button>
                     </form>
 
+                    <!-- 單人報到按鈕 -->
                     <div id="singleDeviceCardShortcut" class="hidden mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center space-y-2">
                         <p class="text-xs text-emerald-800 font-medium">✨ 本裝置已完成報到（編號：<span id="singleBadgeText" class="font-mono font-bold"></span>）</p>
                         <button type="button" onclick="showSingleDeviceCard()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow">
@@ -110,12 +115,13 @@
                         </button>
                     </div>
 
+                    <!-- 複數人員快速叫出專區 -->
                     <div id="multiDeviceCardShortcut" class="hidden mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-3">
                         <p class="text-xs text-emerald-800 font-bold text-center">✨ 本裝置已紀錄多筆報到卡片，請點擊對應人員顯示：</p>
-                        <div id="shortcutListContainer" class="flex flex-wrap gap-2 justify-center">
-                            </div>
+                        <div id="shortcutListContainer" class="flex flex-wrap gap-2 justify-center"></div>
                     </div>
 
+                    <!-- 重複報到提示 -->
                     <div id="reopenCardContainer" class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center space-y-2">
                         <p class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！若不小心關閉畫面，可點擊下方按鈕重新顯示卡片。</p>
                         <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition shadow">
@@ -123,11 +129,12 @@
                         </button>
                     </div>
                 </div>
-
             </div>
         </section>
 
+        <!-- 區塊二：後台管理頁面 -->
         <section id="adminSection" class="hidden space-y-6">
+            <!-- 登入卡片 -->
             <div id="adminLoginCard" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-md mx-auto">
                 <h2 class="text-lg font-bold text-[#0F348D] mb-4 text-center">後台管理登入</h2>
                 <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
@@ -145,7 +152,39 @@
                 </form>
             </div>
 
+            <!-- 登入後的控制面板 -->
             <div id="adminDashboard" class="hidden space-y-6">
+                <!-- GitHub 雲端自動同步設定卡片 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 space-y-3">
+                    <h3 class="font-bold text-[#0F348D] flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 10l5-5 5 5M12 5v15"></path></svg>
+                        GitHub 雲端自動同步設定
+                    </h3>
+                    <p class="text-xs text-slate-500">設定一次後，後台新增人員或匯入 CSV 即可一鍵自動上傳至 GitHub，所有人即時同步！</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">GitHub 帳號 (Owner)</label>
+                            <input type="text" id="ghOwner" placeholder="例如：yourname" class="w-full px-3 py-2 rounded border border-slate-300 text-xs outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">倉庫名稱 (Repo)</label>
+                            <input type="text" id="ghRepo" placeholder="例如：summit-checkin" class="w-full px-3 py-2 rounded border border-slate-300 text-xs outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Personal Access Token</label>
+                            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full px-3 py-2 rounded border border-slate-300 text-xs outline-none">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button onclick="saveGitHubSettings()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition">儲存設定</button>
+                        <button onclick="syncToGitHub()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-medium transition shadow flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            一鍵同步更新至 GitHub
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 報到時間設定 -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
                     <h3 class="font-bold text-[#0F348D] mb-3 flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -168,6 +207,7 @@
                     </div>
                 </div>
 
+                <!-- 操作選單列 -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-3 w-full md:w-auto">
                         <span class="font-bold text-[#0F348D]">管理員控制台</span>
@@ -193,6 +233,7 @@
                     </div>
                 </div>
 
+                <!-- 名單列表統計與表格 -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="font-bold text-slate-700">與會人員暨報到勾稽清單</h3>
@@ -211,8 +252,7 @@
                                     <th class="p-3 sm:p-4 text-center">操作</th>
                                 </tr>
                             </thead>
-                            <tbody id="rosterTableBody" class="divide-y divide-slate-100">
-                                </tbody>
+                            <tbody id="rosterTableBody" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
@@ -221,29 +261,26 @@
 
     </main>
 
+    <!-- 報到成功卡片 Modal -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
         <div class="bg-[#0F348D] text-white rounded-3xl p-6 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center transform transition-all border-4 border-white/20 flex flex-col justify-between" style="min-height: 560px;">
             <div class="absolute -right-12 -bottom-12 w-56 h-56 bg-white/10 rounded-full pointer-events-none"></div>
-            
             <div class="space-y-1.5 pt-2">
                 <p class="text-base uppercase tracking-widest text-blue-200 font-bold">2026 精實國際醫療高峰會</p>
                 <div>
                     <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-black rounded-full uppercase tracking-wider shadow">已完成報到</span>
                 </div>
             </div>
-
             <div class="my-auto py-2 w-full flex flex-col justify-center items-center">
                 <span class="block text-sm uppercase tracking-widest text-blue-100 font-semibold mb-2">大會報到編號</span>
                 <div class="w-full flex justify-center items-center">
                     <span id="modalBadgeNo" class="font-mono font-black tracking-tight text-white drop-shadow-2xl"></span>
                 </div>
             </div>
-
             <div class="space-y-3 pb-1">
                 <div class="bg-white text-[#0F348D] py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
                     ⚠️ 請至櫃台出示此畫面領取資料袋
                 </div>
-
                 <button onclick="closeCardModal()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider">
                     確認並關閉畫面
                 </button>
@@ -251,6 +288,7 @@
         </div>
     </div>
 
+    <!-- 手動新增 Modal -->
     <div id="manualModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-[#0F348D]">手動鍵入與會人員</h3>
@@ -275,18 +313,110 @@
         © 2026 精實國際醫療高峰會 All Rights Reserved.
     </footer>
 
+    <!-- JavaScript 邏輯區 -->
     <script>
-        let attendees = JSON.parse(localStorage.getItem('summit_attendees')) || [];
+        let attendees = [];
         let checkinSettings = JSON.parse(localStorage.getItem('summit_settings')) || { start: '', end: '' };
         let myDeviceBadges = JSON.parse(localStorage.getItem('my_device_badges')) || [];
+
+        // GitHub API 設定讀取
+        let ghSettings = JSON.parse(localStorage.getItem('summit_gh_settings')) || { owner: '', repo: '', token: '' };
 
         window.addEventListener('DOMContentLoaded', () => {
             if (checkinSettings.start) document.getElementById('startTime').value = checkinSettings.start;
             if (checkinSettings.end) document.getElementById('endTime').value = checkinSettings.end;
-            checkDeviceShortcut();
+            
+            // 填入已儲存的 GitHub 設定
+            if (ghSettings.owner) document.getElementById('ghOwner').value = ghSettings.owner;
+            if (ghSettings.repo) document.getElementById('ghRepo').value = ghSettings.repo;
+            if (ghSettings.token) document.getElementById('ghToken').value = ghSettings.token;
+
+            loadAttendeesData();
         });
 
-        function saveAttendees() {
+        function saveGitHubSettings() {
+            ghSettings = {
+                owner: document.getElementById('ghOwner').value.trim(),
+                repo: document.getElementById('ghRepo').value.trim(),
+                token: document.getElementById('ghToken').value.trim()
+            };
+            localStorage.setItem('summit_gh_settings', JSON.stringify(ghSettings));
+            showAlert('GitHub 雲端設定已儲存！');
+        }
+
+        // 自動透過 GitHub API 同步更新 attendees.json
+        async function syncToGitHub() {
+            if (!ghSettings.owner || !ghSettings.repo || !ghSettings.token) {
+                showAlert('請先填寫並儲存 GitHub 帳號、倉庫名稱與 Token！', 'error');
+                return;
+            }
+
+            showAlert('正在透過 GitHub API 同步更新雲端名單...', 'success');
+
+            const filePath = 'attendees.json';
+            const apiUrl = `https://api.github.com/repos/${ghSettings.owner}/${ghSettings.repo}/contents/${filePath}`;
+
+            try {
+                // 1. 先取得該檔案目前的 SHA (GitHub 更新檔案必須帶有原本的 SHA 才能覆蓋)
+                let sha = '';
+                const getRes = await fetch(apiUrl, {
+                    headers: { 'Authorization': `token ${ghSettings.token}` }
+                });
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                }
+
+                // 2. 將目前的 attendees 陣列轉成 Base64 字串
+                const jsonString = JSON.stringify(attendees, null, 2);
+                const base64Content = btoa(unescape(encodeURIComponent(jsonString)));
+
+                // 3. 發送 PUT 請求寫回 GitHub
+                const putRes = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${ghSettings.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Admin update attendees via web dashboard',
+                        content: base64Content,
+                        sha: sha ? sha : undefined
+                    })
+                });
+
+                if (putRes.ok) {
+                    showAlert('🎉 成功同步更新至 GitHub 雲端！所有人重新整理即可看到最新名單。');
+                } else {
+                    const errJson = await putRes.json();
+                    throw new Error(errJson.message || '更新失敗');
+                }
+            } catch (err) {
+                showAlert('同步失敗: ' + err.message, 'error');
+            }
+        }
+
+        function loadAttendeesData() {
+            fetch('attendees.json?' + new Date().getTime())
+                .then(response => {
+                    if (!response.ok) throw new Error('無法載入名單');
+                    return response.json();
+                })
+                .then(data => {
+                    attendees = data;
+                    checkDeviceShortcut();
+                    if (!document.getElementById('adminSection').classList.contains('hidden')) {
+                        renderTable();
+                    }
+                })
+                .catch(err => {
+                    console.warn('讀取外部 JSON 失敗，改用暫存', err);
+                    attendees = JSON.parse(localStorage.getItem('summit_attendees')) || [];
+                    checkDeviceShortcut();
+                });
+        }
+
+        function saveAttendeesToLocalStorage() {
             localStorage.setItem('summit_attendees', JSON.stringify(attendees));
         }
 
@@ -299,6 +429,7 @@
         }
 
         function switchTab(tab) {
+            loadAttendeesData();
             const checkinSec = document.getElementById('checkinSection');
             const adminSec = document.getElementById('adminSection');
             const navCheckinBtn = document.getElementById('navCheckinBtn');
@@ -314,10 +445,10 @@
                 adminSec.classList.remove('hidden');
                 navCheckinBtn.className = "px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm font-medium transition shadow";
                 navAdminBtn.className = "px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition shadow";
+                renderTable();
             }
             hideAlert();
             document.getElementById('reopenCardContainer').classList.add('hidden');
-            checkDeviceShortcut();
         }
 
         function showAlert(message, type = 'success') {
@@ -327,9 +458,7 @@
                 type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
             }`;
             box.classList.remove('hidden');
-            setTimeout(() => {
-                box.classList.add('hidden');
-            }, 4000);
+            setTimeout(() => { box.classList.add('hidden'); }, 5000);
         }
 
         function hideAlert() {
@@ -339,21 +468,15 @@
         function maskName(name) {
             if (!name) return '';
             const len = name.length;
-            if (len === 2) {
-                return name[0] + 'O';
-            } else if (len === 3) {
-                return name[0] + 'O' + name[2];
-            } else if (len === 4) {
-                return name[0] + 'OO' + name[3];
-            } else if (len > 4) {
-                return name[0] + 'O'.repeat(len - 2) + name[len - 1];
-            }
+            if (len === 2) return name[0] + 'O';
+            if (len === 3) return name[0] + 'O' + name[2];
+            if (len === 4) return name[0] + 'OO' + name[3];
+            if (len > 4) return name[0] + 'O'.repeat(len - 2) + name[len - 1];
             return name;
         }
 
         let lastCheckedBadge = '';
 
-        // 智慧判斷：單人顯示按鈕，複數顯示專區清單
         function checkDeviceShortcut() {
             const singleBox = document.getElementById('singleDeviceCardShortcut');
             const multiBox = document.getElementById('multiDeviceCardShortcut');
@@ -361,25 +484,17 @@
             const listContainer = document.getElementById('shortcutListContainer');
             
             listContainer.innerHTML = '';
-
-            // 確保這些編號在總名單中確實是已報到狀態
-            myDeviceBadges = myDeviceBadges.filter(b => {
-                const found = attendees.find(a => a.badgeNo === b && a.isCheckedIn);
-                return found;
-            });
+            myDeviceBadges = myDeviceBadges.filter(b => attendees.some(a => a.badgeNo === b && a.isCheckedIn));
             localStorage.setItem('my_device_badges', JSON.stringify(myDeviceBadges));
 
             if (myDeviceBadges.length === 1) {
-                // 單人模式：顯示「顯示報到卡片」按鈕
                 singleBadgeText.textContent = myDeviceBadges[0];
                 singleBox.classList.remove('hidden');
                 multiBox.classList.add('hidden');
             } else if (myDeviceBadges.length > 1) {
-                // 複數模式：顯示「支援複數人員卡片的快速叫出專區」
                 myDeviceBadges.forEach(badgeNo => {
                     const attendeeObj = attendees.find(a => a.badgeNo === badgeNo);
                     const displayName = attendeeObj ? `${badgeNo} (${attendeeObj.maskedName})` : badgeNo;
-                    
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow-sm";
@@ -396,9 +511,7 @@
         }
 
         function showSingleDeviceCard() {
-            if (myDeviceBadges.length === 1) {
-                showCardModal(myDeviceBadges[0]);
-            }
+            if (myDeviceBadges.length === 1) showCardModal(myDeviceBadges[0]);
         }
 
         function addDeviceBadge(badgeNo) {
@@ -411,7 +524,6 @@
 
         function handleCheckin(e) {
             e.preventDefault();
-
             const now = new Date();
             if (checkinSettings.start && now < new Date(checkinSettings.start)) {
                 showAlert('報到時間尚未開始！', 'error');
@@ -425,19 +537,17 @@
             const badgeNo = document.getElementById('badgeNo').value.trim();
             const fullNameInput = document.getElementById('fullName').value.trim();
             const maskedInputName = maskName(fullNameInput);
-            
             const lunch = document.querySelector('input[name="lunch"]:checked').value;
             const creditCheckboxes = document.querySelectorAll('input[name="credits"]:checked');
             const creditsArr = Array.from(creditCheckboxes).map(cb => cb.value);
             const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
 
             if (attendees.length === 0) {
-                showAlert('目前系統尚未載入與會人員名單，請先至後台匯入名單！', 'error');
+                showAlert('目前系統尚未載入與會人員名單，請確認網路連線！', 'error');
                 return;
             }
 
             let target = attendees.find(item => item.badgeNo === badgeNo);
-            
             if (!target) {
                 showAlert('找不到此大會編號，請確認編號是否正確！', 'error');
                 document.getElementById('reopenCardContainer').classList.add('hidden');
@@ -462,8 +572,8 @@
             target.checkinTime = new Date().toLocaleString('zh-TW', { hour12: false });
             target.lunch = lunch;
             target.credits = creditsStr;
-            saveAttendees();
-
+            
+            saveAttendeesToLocalStorage();
             lastCheckedBadge = badgeNo;
             addDeviceBadge(badgeNo);
 
@@ -474,9 +584,7 @@
         }
 
         function reopenExistingCard() {
-            if (lastCheckedBadge) {
-                showCardModal(lastCheckedBadge);
-            }
+            if (lastCheckedBadge) showCardModal(lastCheckedBadge);
         }
 
         function showCardModal(badgeNo) {
@@ -490,7 +598,7 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 後台登入驗證（採用字串反轉比對法：帳號 twlean，密碼 lean25553000!）
+        // 後台登入驗證 (帳號 twlean，密碼 lean25553000!)
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('adminUser').value.trim();
@@ -546,10 +654,10 @@
                 credits: '未填寫'
             });
 
-            saveAttendees();
+            saveAttendeesToLocalStorage();
             closeManualModal();
             renderTable();
-            showAlert(`已成功手動加入與會人員：${maskName(fullName)}`);
+            showAlert(`已成功手動加入與會人員！記得點擊上方的「一鍵同步更新至 GitHub」。`);
         }
 
         function importCSV(e) {
@@ -583,9 +691,9 @@
                         }
                     }
                 });
-                saveAttendees();
+                saveAttendeesToLocalStorage();
                 renderTable();
-                showAlert(`成功匯入 ${count} 筆與會人員名單！`);
+                showAlert(`成功匯入 ${count} 筆！記得點擊上方的「一鍵同步更新至 GitHub」。`);
                 e.target.value = '';
             };
             reader.readAsText(file);
@@ -626,7 +734,7 @@
                     target.lunch = '未填寫';
                     target.credits = '未填寫';
                 }
-                saveAttendees();
+                saveAttendeesToLocalStorage();
                 renderTable();
                 showAlert(`已更新編號 ${badgeNo} 的報到狀態。`);
                 checkDeviceShortcut();
@@ -640,11 +748,10 @@
         function renderTable() {
             const tbody = document.getElementById('rosterTableBody');
             tbody.innerHTML = '';
-            
             document.getElementById('recordCount').textContent = `總計：${attendees.length} 筆`;
 
             if (attendees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-sm">目前尚無與會人員資料，請透過上方按鈕匯入或手動鍵入。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-sm">目前尚無與會人員資料。</td></tr>`;
                 return;
             }
 
