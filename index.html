@@ -187,7 +187,7 @@
                     </div>
                 </div>
 
-                <!-- 勾稽清單表格 (新增資料袋狀態與代領人) -->
+                <!-- 勾稽清單表格 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="font-bold text-slate-700 text-base">與會人員暨報到勾稽清單</h3>
@@ -217,7 +217,7 @@
 
     </main>
 
-    <!-- 報到成功憑證卡片 Modal (含右上角圓圈 X 關閉與兌換資料袋邏輯) -->
+    <!-- 報到成功憑證卡片 Modal -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
         <div class="bg-[#0F348D] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center border-4 border-white/20 flex flex-col justify-between" style="min-height: 540px;">
             
@@ -249,10 +249,28 @@
                     ⚠️ 請向櫃台出示此畫面兌換大會資料袋
                 </div>
                 
-                <!-- 兌換資料袋核心按鈕 -->
-                <button type="button" id="claimBagBtn" onclick="handleClaimBag()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
+                <!-- 兌換資料袋按鈕 -->
+                <button type="button" id="claimBagBtn" onclick="openClaimDialog()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
                     🎁 兌換資料袋
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 極簡極淨「兌換確認」對話框 Modal -->
+    <div id="claimModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div class="text-center">
+                <h3 class="text-base font-bold text-[#0F348D]">兌換大會資料袋</h3>
+                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（預設為報到者本人）</p>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">領取人 / 代領人姓名</label>
+                <input type="text" id="claimInputName" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50 font-medium text-slate-800">
+            </div>
+            <div class="flex gap-2.5 pt-1">
+                <button type="button" onclick="closeClaimDialog()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition">取消</button>
+                <button type="button" onclick="confirmClaimBag()" class="w-1/2 py-2.5 bg-[#0F348D] hover:bg-blue-900 text-white font-bold text-xs rounded-xl transition shadow">確認兌換</button>
             </div>
         </div>
     </div>
@@ -409,7 +427,6 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
         }
 
-        // 與會者前台報到（含代領裝置首位姓名記錄）
         async function handleCheckin(e) {
             e.preventDefault();
             const now = new Date();
@@ -431,8 +448,8 @@
                 return;
             }
             const lunch = lunchElem.value;
-            const creditCheckboxes = document.querySelectorAll('input[name="credits"]:checked');
-            const creditsArr = Array.from(creditCheckboxes).map(cb => cb.value);
+            const creditCheckboxes = document.querySelector('input[name="credits"]:checked');
+            const creditsArr = Array.from(document.querySelectorAll('input[name="credits"]:checked')).map(cb => cb.value);
             const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
 
             showAlert('正在連線雲端驗證與會身分...', 'success');
@@ -456,16 +473,10 @@
                 return;
             }
 
-            // 記錄本手機第一位完成報到者的姓名，作為代領預設值
-            let primaryUser = localStorage.getItem('summit_primary_user');
-            if (!primaryUser) {
-                localStorage.setItem('summit_primary_user', fullNameInput);
-            }
-
             if (target.isCheckedIn) {
                 lastCheckedBadge = badgeNo;
                 const msg = target.isBagClaimed 
-                    ? `此大會編號已經完成報到，且已由「${target.claimedBy || '他人'}」完成資料袋兌換！`
+                    ? `此編號已經完成報到，且已由「${target.claimedBy || '他人'}」完成資料袋兌換！`
                     : `此大會編號已經完成報到！`;
                 document.getElementById('reopenMsg').textContent = msg;
                 showAlert(msg, 'error');
@@ -492,9 +503,12 @@
             if (lastCheckedBadge) showCardModal(lastCheckedBadge);
         }
 
-        function showCardModal(badgeNo) {
+        async function showCardModal(badgeNo) {
             currentModalBadge = badgeNo;
-            const target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            
+            // 從最新快照獲取狀態
+            let attendees = await fetchCloudAttendees();
+            let target = attendees.find(a => a.badgeNo === badgeNo) || cachedAttendees.find(a => a.badgeNo === badgeNo);
             
             document.getElementById('modalBadgeNo').textContent = badgeNo;
             
@@ -502,13 +516,11 @@
             const noticeBox = document.getElementById('bagNoticeBox');
 
             if (target && target.isBagClaimed) {
-                // 已領取狀態：鎖死按鈕
                 claimBtn.disabled = true;
-                claimBtn.className = "w-full py-3.5 bg-slate-400 text-white font-bold text-sm sm:text-base rounded-xl cursor-not-allowed shadow-none flex items-center justify-center gap-2";
+                claimBtn.className = "w-full py-3.5 bg-slate-300 text-slate-600 font-bold text-sm sm:text-base rounded-xl cursor-not-allowed shadow-none flex items-center justify-center gap-2";
                 claimBtn.innerHTML = `✅ 已領取資料袋 (${target.claimedBy || '已兌換'})`;
                 noticeBox.textContent = `⚠️ 此憑證已於現場完成資料袋兌換 (領取人：${target.claimedBy || '未知'})`;
             } else {
-                // 未領取狀態
                 claimBtn.disabled = false;
                 claimBtn.className = "w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2 cursor-pointer";
                 claimBtn.innerHTML = `🎁 兌換資料袋`;
@@ -524,37 +536,64 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 點擊「兌換資料袋」的處理邏輯
-        async function handleClaimBag() {
+        // 開啟極簡兌換對話框
+        function openClaimDialog() {
             if (!currentModalBadge) return;
-            
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === currentModalBadge);
+            const target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
             if (!target) return;
 
-            if (target.isBagClaimed) {
-                alert('此資料袋已經兌換過了！');
+            // 需求 3：預設為「報到者本人姓名」
+            document.getElementById('claimInputName').value = target.fullName;
+            document.getElementById('claimModal').classList.remove('hidden');
+            document.getElementById('claimModal').classList.add('flex');
+        }
+
+        function closeClaimDialog() {
+            document.getElementById('claimModal').classList.add('hidden');
+            document.getElementById('claimModal').classList.remove('flex');
+        }
+
+        // 確認兌換資料袋：即時寫入雲端並同步鎖死
+        async function confirmClaimBag() {
+            const inputName = document.getElementById('claimInputName').value.trim();
+            if (!inputName) {
+                alert('請輸入領取人姓名！');
                 return;
             }
 
-            // 取得本機預設領取人（第一位報到者），若無則以本人姓名為預設值
-            const primaryUser = localStorage.getItem('summit_primary_user') || target.fullName;
-            let claimedName = prompt(`即將兌換資料袋！\n若為本人領取請直接點「確定」，若為代領請修改代領人姓名：`, primaryUser);
-            
-            if (claimedName === null) return; // 使用者點擊取消
-            claimedName = claimedName.trim() || target.fullName;
+            closeClaimDialog();
+            showAlert('正在將資料袋領取狀態同步寫入 Google 試算表...', 'success');
 
-            target.isBagClaimed = true;
-            target.claimedBy = claimedName;
+            const target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
+            if (target) {
+                target.isBagClaimed = true;
+                target.claimedBy = inputName;
+            }
 
-            showAlert('正在核銷資料袋兌換狀態...', 'success');
-            await pushCloudAttendees(attendees);
+            // 即時向 Apps Script 發送專屬單筆更新請求
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: "claimBag",
+                        badgeNo: currentModalBadge,
+                        claimedBy: inputName
+                    })
+                });
+            } catch (err) {
+                console.error("單筆寫入失敗:", err);
+            }
 
-            showCardModal(currentModalBadge); // 重新渲染 modal 為已鎖定狀態
-            if (document.getElementById('adminSection').classList.contains('hidden') === false) {
+            // 重新刷新卡片為鎖死狀態
+            showCardModal(currentModalBadge);
+            showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」。`, 'success');
+
+            // 若在後台畫面，同步重繪表格
+            if (!document.getElementById('adminSection').classList.contains('hidden')) {
                 renderTable();
             }
-            showAlert(`🎉 成功兌換資料袋！領取人：${claimedName}`, 'success');
         }
 
         // 後台切換資料袋領取狀態
