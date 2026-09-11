@@ -11,7 +11,7 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         #modalBadgeNo {
-            font-size: clamp(4rem, 18vw, 10rem);
+            font-size: clamp(4.5rem, 18vw, 10rem);
             line-height: 0.85;
         }
     </style>
@@ -47,19 +47,18 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-10 max-w-xl mx-auto space-y-6">
                 <div class="text-center pb-4 border-b border-slate-100">
                     <h2 class="text-xl font-extrabold text-[#0F348D]">線上報到系統</h2>
-                    <p class="text-xs text-slate-500 mt-1">請填寫大會編號與實際報到/代領人姓名</p>
+                    <p class="text-xs text-slate-500 mt-1">請填寫大會編號與完整姓名進行現場報到</p>
                 </div>
 
                 <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-5">
                     <div>
                         <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">大會編號 <span class="text-rose-500">*</span></label>
-                        <input type="text" id="badgeNo" required placeholder="例如：LIM2026-001" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm font-mono bg-slate-50/50">
+                        <input type="text" id="badgeNo" required placeholder="例如：001 或 LIM2026-001" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm font-mono bg-slate-50/50">
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">完整姓名 <span class="text-rose-500">*</span></label>
-                        <input type="text" id="fullName" required placeholder="請輸入您（或代報到人）的完整姓名" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm bg-slate-50/50">
-                        <p class="text-[11px] text-slate-400 mt-1">※ 若為他人代報到/代領，請直接填寫「被代報者姓名」以進行身分比對。</p>
+                        <input type="text" id="fullName" required placeholder="請輸入您的完整姓名" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] focus:border-[#0F348D] outline-none transition text-sm bg-slate-50/50">
                     </div>
 
                     <div>
@@ -107,10 +106,10 @@
                     </button>
                 </form>
 
-                <!-- 重複報到 / 已領取提示卡片 -->
+                <!-- 重複報到提示 -->
                 <div id="reopenCardContainer" class="hidden p-4 bg-blue-50 border border-blue-200 rounded-xl text-center space-y-2">
-                    <p id="reopenCardMsg" class="text-xs text-blue-800 font-medium"></p>
-                    <button type="button" onclick="reopenExistingCard()" id="reopenCardBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">
+                    <p id="reopenMsg" class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！</p>
+                    <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">
                         重新顯示報到憑證
                     </button>
                 </div>
@@ -188,7 +187,7 @@
                     </div>
                 </div>
 
-                <!-- 勾稽清單表格 -->
+                <!-- 勾稽清單表格 (新增資料袋狀態與代領人) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="font-bold text-slate-700 text-base">與會人員暨報到勾稽清單</h3>
@@ -200,12 +199,12 @@
                                 <tr class="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
                                     <th class="py-4 px-4 w-24">大會編號</th>
                                     <th class="py-4 px-4 w-32">與會姓名</th>
-                                    <th class="py-4 px-4 w-28 text-center">報到狀態</th>
-                                    <th class="py-4 px-4 w-28 text-center">資料袋領取</th>
+                                    <th class="py-4 px-4 w-24 text-center">報到狀態</th>
                                     <th class="py-4 px-4">報到時間</th>
-                                    <th class="py-4 px-4">代領人紀錄</th>
                                     <th class="py-4 px-4 w-24">午餐需求</th>
                                     <th class="py-4 px-4">教育積分</th>
+                                    <th class="py-4 px-4 text-center w-28">資料袋狀態</th>
+                                    <th class="py-4 px-4 w-32">領取人／代領人</th>
                                     <th class="py-4 px-4 text-center w-56">操作</th>
                                 </tr>
                             </thead>
@@ -218,48 +217,42 @@
 
     </main>
 
-    <!-- 需求 1 & 2：報到成功憑證卡片 Modal（含右上角圓圈X關閉按鈕與兌換資料袋按鈕） -->
+    <!-- 報到成功憑證卡片 Modal (含右上角圓圈 X 關閉與兌換資料袋邏輯) -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
         <div class="bg-[#0F348D] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center border-4 border-white/20 flex flex-col justify-between" style="min-height: 540px;">
+            
             <!-- 右上角圓圈 + X 關閉按鈕 -->
-            <button type="button" onclick="closeCardModal()" class="absolute top-4 right-4 w-9 h-9 bg-white/20 hover:bg-white/30 text-white rounded-full flex items-center justify-center transition focus:outline-none z-10">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <button type="button" onclick="closeCardModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition shadow-lg z-10 focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
             </button>
 
             <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/10 rounded-full pointer-events-none"></div>
+            
             <div class="space-y-2 pt-2">
                 <p class="text-xs sm:text-sm uppercase tracking-widest text-blue-200 font-bold">2026 精實國際醫療高峰會</p>
                 <div>
-                    <span id="cardBadgeStatusTag" class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-extrabold rounded-full uppercase tracking-wider shadow">報到憑證已生效</span>
+                    <span id="badgeStatusTag" class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-extrabold rounded-full uppercase tracking-wider shadow">報到憑證已生效</span>
                 </div>
             </div>
+            
             <div class="my-auto py-4 w-full flex flex-col justify-center items-center">
                 <span class="block text-xs uppercase tracking-widest text-blue-100 font-semibold mb-3">您的專屬大會編號</span>
                 <div class="w-full flex justify-center items-center">
                     <span id="modalBadgeNo" class="font-mono font-black tracking-tight text-white drop-shadow-2xl"></span>
                 </div>
             </div>
+            
             <div class="space-y-3 pb-1">
-                <div class="bg-white text-[#0F348D] py-3 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
-                    ⚠️ 請向櫃台出示此畫面領取大會資料袋
+                <div id="bagNoticeBox" class="bg-white text-[#0F348D] py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
+                    ⚠️ 請向櫃台出示此畫面兌換大會資料袋
                 </div>
-                <!-- 按鈕文案改為「兌換資料袋」 -->
-                <button type="button" id="claimBagBtn" onclick="handleClaimBagFromModal()" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
+                
+                <!-- 兌換資料袋核心按鈕 -->
+                <button type="button" id="claimBagBtn" onclick="handleClaimBag()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
                     🎁 兌換資料袋
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 代領人確認 Modal -->
-    <div id="proxyModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-            <h3 class="text-base font-bold text-[#0F348D]">登記資料袋代領人</h3>
-            <p class="text-xs text-slate-500">此編號由他人代領，請輸入「實際代領人」的姓名以供後台備查：</p>
-            <input type="text" id="proxyNameInput" placeholder="例如：張小美" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closeProxyModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold">取消</button>
-                <button type="button" onclick="confirmProxyClaim()" class="px-4 py-2 bg-[#0F348D] hover:bg-blue-900 text-white rounded-xl text-xs font-semibold shadow">確認領取</button>
             </div>
         </div>
     </div>
@@ -271,7 +264,7 @@
             <form id="manualForm" onsubmit="handleManualAdd(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">大會編號</label>
-                    <input type="text" id="manualBadge" required placeholder="例如：LIM2026-100" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
+                    <input type="text" id="manualBadge" required placeholder="例如：100 或 LIM2026-100" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#0F348D] outline-none text-sm bg-slate-50/50">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">完整姓名</label>
@@ -297,7 +290,7 @@
         let checkinSettings = { start: '', end: '' };
         let cachedAttendees = [];
         let lastCheckedBadge = '';
-        let pendingProxyBadge = '';
+        let currentModalBadge = '';
 
         window.addEventListener('DOMContentLoaded', () => {
             try {
@@ -337,7 +330,7 @@
                 cachedAttendees = updatedAttendees;
                 return true;
             } catch (err) {
-                console.error('Google 試算表寫入失敗細節:', err);
+                console.error('Google 試算表寫入失敗:', err);
                 alert('【雲端同步失敗】\n' + err.message);
                 return false;
             }
@@ -416,7 +409,7 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
         }
 
-        // 需求 5：前台重複報到邏輯優化（若資料袋已領取，一併呈現已領取訊息）
+        // 與會者前台報到（含代領裝置首位姓名記錄）
         async function handleCheckin(e) {
             e.preventDefault();
             const now = new Date();
@@ -463,27 +456,23 @@
                 return;
             }
 
-            // 重複報到判斷
+            // 記錄本手機第一位完成報到者的姓名，作為代領預設值
+            let primaryUser = localStorage.getItem('summit_primary_user');
+            if (!primaryUser) {
+                localStorage.setItem('summit_primary_user', fullNameInput);
+            }
+
             if (target.isCheckedIn) {
                 lastCheckedBadge = badgeNo;
-                const reopenContainer = document.getElementById('reopenCardContainer');
-                const reopenMsg = document.getElementById('reopenCardMsg');
-                const reopenBtn = document.getElementById('reopenCardBtn');
-
-                if (target.isBagClaimed) {
-                    reopenMsg.textContent = `此大會編號已完成報到，且【已領取資料袋】！`;
-                    reopenBtn.textContent = '檢視報到與領取憑證';
-                } else {
-                    reopenMsg.textContent = `此大會編號已經完成報到！若需重新檢視憑證卡片，請點擊下方按鈕。`;
-                    reopenBtn.textContent = '重新顯示報到憑證';
-                }
-
-                showAlert('此大會編號已經完成報到！', 'error');
-                reopenContainer.classList.remove('hidden');
+                const msg = target.isBagClaimed 
+                    ? `此大會編號已經完成報到，且已由「${target.claimedBy || '他人'}」完成資料袋兌換！`
+                    : `此大會編號已經完成報到！`;
+                document.getElementById('reopenMsg').textContent = msg;
+                showAlert(msg, 'error');
+                document.getElementById('reopenCardContainer').classList.remove('hidden');
                 return;
             }
 
-            // 首次報到
             target.isCheckedIn = true;
             target.checkinTime = new Date().toString();
             target.lunch = lunch;
@@ -496,7 +485,7 @@
             document.getElementById('reopenCardContainer').classList.add('hidden');
             showCardModal(badgeNo);
             document.getElementById('checkinForm').reset();
-            showAlert('🎉 報到成功！資料已即時同步至大會後台。', 'success');
+            showAlert('🎉 報到成功！請向櫃台兌換大會資料袋。', 'success');
         }
 
         function reopenExistingCard() {
@@ -504,24 +493,26 @@
         }
 
         function showCardModal(badgeNo) {
+            currentModalBadge = badgeNo;
             const target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            
             document.getElementById('modalBadgeNo').textContent = badgeNo;
             
             const claimBtn = document.getElementById('claimBagBtn');
-            const statusTag = document.getElementById('cardBadgeStatusTag');
+            const noticeBox = document.getElementById('bagNoticeBox');
 
             if (target && target.isBagClaimed) {
-                claimBtn.textContent = '✅ 已完成資料袋領取';
-                claimBtn.className = "w-full py-3.5 bg-slate-500 text-white font-bold text-sm rounded-xl cursor-default shadow-md tracking-wider flex items-center justify-center gap-2";
-                claimBtn.onclick = null;
-                statusTag.textContent = '報到憑證與資料袋已生效';
-                statusTag.className = 'inline-block px-4 py-1.5 bg-blue-500 text-white text-xs font-extrabold rounded-full uppercase tracking-wider shadow';
+                // 已領取狀態：鎖死按鈕
+                claimBtn.disabled = true;
+                claimBtn.className = "w-full py-3.5 bg-slate-400 text-white font-bold text-sm sm:text-base rounded-xl cursor-not-allowed shadow-none flex items-center justify-center gap-2";
+                claimBtn.innerHTML = `✅ 已領取資料袋 (${target.claimedBy || '已兌換'})`;
+                noticeBox.textContent = `⚠️ 此憑證已於現場完成資料袋兌換 (領取人：${target.claimedBy || '未知'})`;
             } else {
-                claimBtn.textContent = '🎁 兌換資料袋';
-                claimBtn.className = "w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2";
-                claimBtn.onclick = handleClaimBagFromModal;
-                statusTag.textContent = '報到憑證已生效';
-                statusTag.className = 'inline-block px-4 py-1.5 bg-emerald-500 text-white text-xs font-extrabold rounded-full uppercase tracking-wider shadow';
+                // 未領取狀態
+                claimBtn.disabled = false;
+                claimBtn.className = "w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2 cursor-pointer";
+                claimBtn.innerHTML = `🎁 兌換資料袋`;
+                noticeBox.textContent = `⚠️ 請向櫃台出示此畫面兌換大會資料袋`;
             }
 
             document.getElementById('cardModal').classList.remove('hidden');
@@ -533,17 +524,75 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 點擊 Modal 的「兌換資料袋」
-        async function handleClaimBagFromModal() {
-            const badgeNo = document.getElementById('modalBadgeNo').textContent;
+        // 點擊「兌換資料袋」的處理邏輯
+        async function handleClaimBag() {
+            if (!currentModalBadge) return;
+            
+            let attendees = await fetchCloudAttendees();
+            const target = attendees.find(a => a.badgeNo === currentModalBadge);
+            if (!target) return;
+
+            if (target.isBagClaimed) {
+                alert('此資料袋已經兌換過了！');
+                return;
+            }
+
+            // 取得本機預設領取人（第一位報到者），若無則以本人姓名為預設值
+            const primaryUser = localStorage.getItem('summit_primary_user') || target.fullName;
+            let claimedName = prompt(`即將兌換資料袋！\n若為本人領取請直接點「確定」，若為代領請修改代領人姓名：`, primaryUser);
+            
+            if (claimedName === null) return; // 使用者點擊取消
+            claimedName = claimedName.trim() || target.fullName;
+
+            target.isBagClaimed = true;
+            target.claimedBy = claimedName;
+
+            showAlert('正在核銷資料袋兌換狀態...', 'success');
+            await pushCloudAttendees(attendees);
+
+            showCardModal(currentModalBadge); // 重新渲染 modal 為已鎖定狀態
+            if (document.getElementById('adminSection').classList.contains('hidden') === false) {
+                renderTable();
+            }
+            showAlert(`🎉 成功兌換資料袋！領取人：${claimedName}`, 'success');
+        }
+
+        // 後台切換資料袋領取狀態
+        async function toggleBagClaimStatus(badgeNo) {
             let attendees = await fetchCloudAttendees();
             const target = attendees.find(a => a.badgeNo === badgeNo);
-            
-            if (target) {
+            if (!target) return;
+
+            target.isBagClaimed = !target.isBagClaimed;
+            if (target.isBagClaimed) {
+                if (!target.claimedBy) {
+                    const name = prompt(`請輸入資料袋領取人/代領人姓名：`, target.fullName);
+                    target.claimedBy = name ? name.trim() : target.fullName;
+                }
+            } else {
+                target.claimedBy = '';
+            }
+
+            cachedAttendees = attendees;
+            renderTable();
+            await pushCloudAttendees(attendees);
+            showAlert(`已更新編號 ${badgeNo} 的資料袋狀態！`, 'success');
+        }
+
+        // 後台修改代領人姓名
+        async function editClaimedBy(badgeNo) {
+            let attendees = await fetchCloudAttendees();
+            const target = attendees.find(a => a.badgeNo === badgeNo);
+            if (!target) return;
+
+            const newName = prompt(`修改大會編號 ${badgeNo} 的資料袋代領人姓名：`, target.claimedBy || target.fullName);
+            if (newName !== null) {
+                target.claimedBy = newName.trim();
                 target.isBagClaimed = true;
+                cachedAttendees = attendees;
+                renderTable();
                 await pushCloudAttendees(attendees);
-                showAlert(`大會編號 ${badgeNo} 已成功兌換資料袋！`, 'success');
-                showCardModal(badgeNo); // 重新更新卡片按鈕狀態
+                showAlert(`已更新代領人為「${target.claimedBy}」`, 'success');
             }
         }
 
@@ -674,10 +723,9 @@
                 return;
             }
 
-            let csvContent = "\uFEFF大會編號,完整姓名,報到時間,資料袋領取狀態,代領人紀錄,午餐選項,教育積分需求\n";
+            let csvContent = "\uFEFF大會編號,完整姓名,報到時間,午餐選項,教育積分需求,資料袋狀態,領取人/代領人\n";
             checkedInList.forEach(item => {
-                const bagStatus = item.isBagClaimed ? "已領取" : "未領取";
-                csvContent += `${item.badgeNo},${item.fullName},${formatCheckinTime(item.checkinTime)},${bagStatus},"${item.claimedBy || '本人'}",${item.lunch},"${item.credits}"\n`;
+                csvContent += `${item.badgeNo},${item.fullName},${formatCheckinTime(item.checkinTime)},${item.lunch},"${item.credits}",${item.isBagClaimed ? '已領取' : '未領取'},${item.claimedBy || ''}\n`;
             });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -688,7 +736,7 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showAlert('已成功匯出已報到與領取清單！', 'success');
+            showAlert('已成功匯出已報到人員清單！', 'success');
         }
 
         async function toggleCheckinStatus(badgeNo) {
@@ -712,52 +760,7 @@
                 renderTable();
 
                 await pushCloudAttendees(attendees);
-                showAlert(`已成功更新編號 ${badgeNo} 的勾稽狀態！`, 'success');
-            }
-        }
-
-        // 需求 3 & 4：後台資料袋手動切換與代領人登記
-        async function toggleBagClaimStatus(badgeNo) {
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === badgeNo);
-            if (!target) return;
-
-            if (!target.isBagClaimed) {
-                // 若要切換為已領取，彈出對話框確認是否為代領
-                pendingProxyBadge = badgeNo;
-                document.getElementById('proxyNameInput').value = '';
-                document.getElementById('proxyModal').classList.remove('hidden');
-                document.getElementById('proxyModal').classList.add('flex');
-            } else {
-                // 若切換為未領取
-                target.isBagClaimed = false;
-                target.claimedBy = '';
-                cachedAttendees = attendees;
-                renderTable();
-                await pushCloudAttendees(attendees);
-                showAlert(`已重置編號 ${badgeNo} 的資料袋為未領取狀態！`, 'success');
-            }
-        }
-
-        function closeProxyModal() {
-            document.getElementById('proxyModal').classList.add('hidden');
-            document.getElementById('proxyModal').classList.remove('flex');
-            pendingProxyBadge = '';
-        }
-
-        async function confirmProxyClaim() {
-            const proxyName = document.getElementById('proxyNameInput').value.trim();
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === pendingProxyBadge);
-
-            if (target) {
-                target.isBagClaimed = true;
-                target.claimedBy = proxyName ? `由【${proxyName}】代領` : '本人領取';
-                cachedAttendees = attendees;
-                renderTable();
-                closeProxyModal();
-                await pushCloudAttendees(attendees);
-                showAlert(`編號 ${pendingProxyBadge} 已成功登記領取資料袋！`, 'success');
+                showAlert(`已成功更新編號 ${badgeNo} 的勾稽狀態並同步至雲端！`, 'success');
             }
         }
 
@@ -796,7 +799,6 @@
             displayTableData(attendees);
         }
 
-        // 需求 3 & 4：表格欄位與資料袋自動變色渲染
         function displayTableData(attendees) {
             const tbody = document.getElementById('rosterTableBody');
             const countElem = document.getElementById('recordCount');
@@ -821,26 +823,25 @@
                             ? '<span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold whitespace-nowrap">已報到</span>' 
                             : '<span class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold whitespace-nowrap">未報到</span>'}
                     </td>
-                    <td class="py-4 px-4 text-center">
-                        ${item.isBagClaimed 
-                            ? '<span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold whitespace-nowrap">已領取</span>' 
-                            : '<span class="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold whitespace-nowrap">未領取</span>'}
-                    </td>
                     <td class="py-4 px-4 text-slate-500 text-xs font-mono">${formatCheckinTime(item.checkinTime)}</td>
-                    <td class="py-4 px-4 text-slate-700 text-xs font-semibold">
-                        ${item.claimedBy ? `<span class="text-indigo-600">${item.claimedBy}</span>` : '<span class="text-slate-400">-</span>'}
-                    </td>
                     <td class="py-4 px-4 text-slate-600 text-xs">${item.lunch}</td>
                     <td class="py-4 px-4 text-slate-600 text-xs">${item.credits}</td>
+                    <td class="py-4 px-4 text-center">
+                        ${item.isBagClaimed 
+                            ? `<button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold shadow-sm transition">已領取</button>`
+                            : `<button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full text-xs font-bold transition">未領取</button>`}
+                    </td>
+                    <td class="py-4 px-4 text-slate-700 text-xs font-medium">
+                        ${item.claimedBy 
+                            ? `<span class="flex items-center gap-1">${item.claimedBy} <button type="button" onclick="editClaimedBy('${item.badgeNo}')" class="text-blue-600 hover:text-blue-800 underline text-[10px]">修改</button></span>` 
+                            : '<span class="text-slate-400">-</span>'}
+                    </td>
                     <td class="py-4 px-4 text-center space-x-1.5 whitespace-nowrap">
-                        ${item.isCheckedIn ? `<button type="button" onclick="viewCard('${item.badgeNo}')" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition shadow-sm">檢視</button>` : ''}
-                        <button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-2.5 py-1.5 ${item.isBagClaimed ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-amber-500 text-white hover:bg-amber-600'} rounded-lg text-xs font-semibold transition shadow-sm">
-                            ${item.isBagClaimed ? '已領資料袋' : '領取資料袋'}
+                        ${item.isCheckedIn ? `<button type="button" onclick="viewCard('${item.badgeNo}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition shadow-sm">檢視</button>` : ''}
+                        <button type="button" onclick="toggleCheckinStatus('${item.badgeNo}')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition shadow-sm">
+                            ${item.isCheckedIn ? '取消' : '設為已報到'}
                         </button>
-                        <button type="button" onclick="toggleCheckinStatus('${item.badgeNo}')" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition shadow-sm">
-                            ${item.isCheckedIn ? '取消報到' : '設為已報到'}
-                        </button>
-                        <button type="button" onclick="deleteAttendee('${item.badgeNo}')" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold transition font-bold shadow-sm">刪除</button>
+                        <button type="button" onclick="deleteAttendee('${item.badgeNo}')" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold transition font-bold text-white shadow-sm">刪除</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
