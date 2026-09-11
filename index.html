@@ -11,7 +11,7 @@
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         #modalBadgeNo {
-            font-size: clamp(4.5rem, 18vw, 10rem);
+            font-size: clamp(4rem, 16vw, 9rem);
             line-height: 0.85;
         }
     </style>
@@ -45,9 +45,18 @@
         <!-- 區塊一：與會者報到頁面 -->
         <section id="checkinSection" class="space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-10 max-w-xl mx-auto space-y-6">
+                
+                <!-- 多人報到快捷提示列 -->
+                <div id="multiCardBar" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                    <span id="multiCardCountText" class="text-xs font-bold text-amber-900">已為 0 人完成報到</span>
+                    <button type="button" onclick="openSessionCardsModal(0)" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition shadow">
+                        🎴 查看所有憑證卡片
+                    </button>
+                </div>
+
                 <div class="text-center pb-4 border-b border-slate-100">
                     <h2 class="text-xl font-extrabold text-[#0F348D]">線上報到系統</h2>
-                    <p class="text-xs text-slate-500 mt-1">請填寫大會編號與完整姓名進行現場報到</p>
+                    <p class="text-xs text-slate-500 mt-1">請填寫大會編號與完整姓名進行現場報到（可連續幫多人報到）</p>
                 </div>
 
                 <form id="checkinForm" onsubmit="handleCheckin(event)" class="space-y-5">
@@ -109,7 +118,7 @@
                 <div id="reopenCardContainer" class="hidden p-4 bg-blue-50 border border-blue-200 rounded-xl text-center space-y-2">
                     <p id="reopenMsg" class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！</p>
                     <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">
-                        重新顯示報到憑證
+                        檢視此與會者憑證
                     </button>
                 </div>
             </div>
@@ -211,9 +220,9 @@
 
     </main>
 
-    <!-- 報到成功憑證卡片 Modal -->
+    <!-- 支援「多人切換」的報到成功憑證卡片 Modal -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
-        <div class="bg-[#0F348D] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center border-4 border-white/20 flex flex-col justify-between" style="min-height: 540px;">
+        <div class="bg-[#0F348D] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center border-4 border-white/20 flex flex-col justify-between" style="min-height: 580px;">
             <button type="button" onclick="closeCardModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition shadow-lg z-10 focus:outline-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -226,8 +235,10 @@
                 </div>
             </div>
             
-            <div class="my-auto py-4 w-full flex flex-col justify-center items-center">
-                <span class="block text-xs uppercase tracking-widest text-blue-100 font-semibold mb-3">您的專屬大會編號</span>
+            <!-- 卡片核心內容區 -->
+            <div class="my-auto py-2 w-full flex flex-col justify-center items-center space-y-1">
+                <span class="block text-xs uppercase tracking-widest text-blue-100 font-semibold">與會人員：<strong id="modalAttendeeName" class="text-amber-300 text-sm">--</strong></span>
+                <span class="block text-xs uppercase tracking-widest text-blue-200 font-semibold mt-1">專屬大會編號</span>
                 <div class="w-full flex justify-center items-center">
                     <span id="modalBadgeNo" class="font-mono font-black tracking-tight text-white drop-shadow-2xl"></span>
                 </div>
@@ -240,6 +251,13 @@
                 <button type="button" id="claimBagBtn" onclick="openClaimDialog()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
                     🎁 兌換資料袋
                 </button>
+
+                <!-- 多人報到左右切換導覽控制項 -->
+                <div id="cardNavControls" class="flex items-center justify-between bg-blue-950/60 p-2 rounded-xl text-xs font-semibold text-blue-200 pt-2 border border-blue-700/50">
+                    <button type="button" onclick="navigateCard(-1)" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold transition">◀ 上一張</button>
+                    <span id="cardCounterText" class="font-mono text-amber-300 font-bold">1 / 1</span>
+                    <button type="button" onclick="navigateCard(1)" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold transition">下一張 ▶</button>
+                </div>
             </div>
         </div>
     </div>
@@ -249,7 +267,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div class="text-center">
                 <h3 class="text-base font-bold text-[#0F348D]">兌換大會資料袋</h3>
-                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（預設帶入前台報到全名）</p>
+                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已為您預載前台輸入全名）</p>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">領取人 / 代領人姓名</label>
@@ -295,7 +313,10 @@
         let checkinSettings = { start: '', end: '' };
         let cachedAttendees = [];
         let lastCheckedBadge = '';
-        let currentModalBadge = '';
+        
+        // 多人報到：暫存本裝置已報到的所有人卡片 (大會編號清單)
+        let sessionBadges = [];
+        let currentCardIndex = 0;
 
         window.addEventListener('DOMContentLoaded', () => {
             try {
@@ -309,7 +330,6 @@
             fetchCloudAttendees();
         });
 
-        // 從雲端抓取名單（增加錯誤防護）
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime());
@@ -325,7 +345,6 @@
             }
         }
 
-        // 強力全量寫入試算表
         async function pushCloudAttendees(updatedAttendees) {
             cachedAttendees = updatedAttendees;
             try {
@@ -482,21 +501,27 @@
                     return;
                 }
 
-                // 補齊真實全名
                 target.fullName = fullNameInput;
                 target.isCheckedIn = true;
                 target.checkinTime = new Date().toString();
                 target.lunch = lunch;
                 target.credits = creditsStr;
 
-                // 同步寫回試算表
+                // 多人報到卡片收集：若此編號不在本裝置清單中則加入
+                if (!sessionBadges.includes(badgeNo)) {
+                    sessionBadges.push(badgeNo);
+                }
+                updateMultiCardBar();
+
                 await pushCloudAttendees(attendees);
 
                 lastCheckedBadge = badgeNo;
                 document.getElementById('reopenCardContainer').classList.add('hidden');
-                showCardModal(badgeNo);
+                
+                // 開啟剛剛報到的這張卡片
+                openSessionCardsModal(sessionBadges.indexOf(badgeNo));
                 document.getElementById('checkinForm').reset();
-                showAlert('🎉 報到成功！請向櫃台兌換大會資料袋。', 'success');
+                showAlert('🎉 報到成功！已將此與會者加入您的憑證清單。', 'success');
 
             } catch (err) {
                 console.error(err);
@@ -507,19 +532,54 @@
             }
         }
 
-        function reopenExistingCard() {
-            if (lastCheckedBadge) showCardModal(lastCheckedBadge);
+        // 更新頂部「多人報到快捷提示列」
+        function updateMultiCardBar() {
+            const bar = document.getElementById('multiCardBar');
+            const countText = document.getElementById('multiCardCountText');
+            if (sessionBadges.length > 0) {
+                bar.classList.remove('hidden');
+                countText.textContent = `本裝置已累計完成 ${sessionBadges.length} 人報到`;
+            } else {
+                bar.classList.add('hidden');
+            }
         }
 
-        function showCardModal(badgeNo) {
-            currentModalBadge = badgeNo;
-            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+        function reopenExistingCard() {
+            if (lastCheckedBadge) {
+                if (!sessionBadges.includes(lastCheckedBadge)) {
+                    sessionBadges.push(lastCheckedBadge);
+                    updateMultiCardBar();
+                }
+                openSessionCardsModal(sessionBadges.indexOf(lastCheckedBadge));
+            }
+        }
+
+        // 開啟本裝置目前暫存的卡片 (帶索引)
+        function openSessionCardsModal(index = 0) {
+            if (sessionBadges.length === 0) return;
+            currentCardIndex = index;
+            if (currentCardIndex < 0) currentCardIndex = 0;
+            if (currentCardIndex >= sessionBadges.length) currentCardIndex = sessionBadges.length - 1;
+
+            renderCardByIndex(currentCardIndex);
             
+            document.getElementById('cardModal').classList.remove('hidden');
+            document.getElementById('cardModal').classList.add('flex');
+        }
+
+        // 渲染指定索引的卡片
+        function renderCardByIndex(index) {
+            const badgeNo = sessionBadges[index];
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            if (!target) return;
+
             document.getElementById('modalBadgeNo').textContent = badgeNo;
+            document.getElementById('modalAttendeeName').textContent = target.fullName || target.maskedName;
+
             const claimBtn = document.getElementById('claimBagBtn');
             const noticeBox = document.getElementById('bagNoticeBox');
 
-            if (target && target.isBagClaimed) {
+            if (target.isBagClaimed) {
                 claimBtn.disabled = true;
                 claimBtn.className = "w-full py-3.5 bg-slate-300 text-slate-600 font-bold text-sm sm:text-base rounded-xl cursor-not-allowed shadow-none flex items-center justify-center gap-2";
                 claimBtn.innerHTML = `✅ 已領取資料袋 (${target.claimedBy || '已兌換'})`;
@@ -531,8 +591,25 @@
                 noticeBox.textContent = `⚠️ 請向櫃台出示此畫面兌換大會資料袋`;
             }
 
-            document.getElementById('cardModal').classList.remove('hidden');
-            document.getElementById('cardModal').classList.add('flex');
+            // 更新計數器與導覽列
+            document.getElementById('cardCounterText').textContent = `${index + 1} / ${sessionBadges.length}`;
+            const navControls = document.getElementById('cardNavControls');
+            if (sessionBadges.length > 1) {
+                navControls.classList.remove('hidden');
+                navControls.classList.add('flex');
+            } else {
+                navControls.classList.add('hidden');
+                navControls.classList.remove('flex');
+            }
+        }
+
+        // 上一張 / 下一張卡片切換
+        function navigateCard(direction) {
+            let newIndex = currentCardIndex + direction;
+            if (newIndex >= 0 && newIndex < sessionBadges.length) {
+                currentCardIndex = newIndex;
+                renderCardByIndex(currentCardIndex);
+            }
         }
 
         function closeCardModal() {
@@ -540,10 +617,11 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 開啟對話框（預載前台輸入之全名）
+        // 開啟兌換對話框：精準預載目前顯示卡片對應的「與會者姓名」
         function openClaimDialog() {
-            if (!currentModalBadge) return;
-            let target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
+            const badgeNo = sessionBadges[currentCardIndex];
+            if (!badgeNo) return;
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             document.getElementById('claimInputName').value = target.fullName || '';
@@ -556,7 +634,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 核心：確認兌換並 100% 同步寫入試算表
+        // 確認兌換資料袋
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -564,18 +642,20 @@
                 return;
             }
 
-            let target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
+            const currentBadgeNo = sessionBadges[currentCardIndex];
+            let target = cachedAttendees.find(a => a.badgeNo === currentBadgeNo);
             if (!target) return;
 
-            // 1. 本地狀態即時更新
+            // 1. 本地狀態更新
             target.isBagClaimed = true;
             target.claimedBy = inputName;
 
-            // 2. 關閉 Modal
             closeClaimDialog();
-            closeCardModal();
 
-            // 3. 發送單筆寫入請求，確保數據不丟失
+            // 2. 重新渲染目前這張卡片狀態（變更為已領取灰色按鈕）
+            renderCardByIndex(currentCardIndex);
+
+            // 3. 發送至 Google 試算表寫入
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
@@ -583,25 +663,22 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: "claimBag",
-                        badgeNo: currentModalBadge,
+                        badgeNo: currentBadgeNo,
                         claimedBy: inputName
                     })
                 });
-                // 再次全量推送備份
                 pushCloudAttendees(cachedAttendees);
             } catch (e) {
                 console.error("同步至雲端失敗:", e);
             }
 
-            showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」。`, 'success');
+            showAlert(`🎉 兌換成功！已完成 ${target.fullName || currentBadgeNo} 的資料袋領取登記。`, 'success');
 
-            // 4. 重繪後台表格
             if (!document.getElementById('adminSection').classList.contains('hidden')) {
                 renderTable();
             }
         }
 
-        // 後台切換領取狀態並同步
         async function toggleBagClaimStatus(badgeNo) {
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
@@ -621,7 +698,6 @@
             showAlert(`已更新編號 ${badgeNo} 的領取狀態並同步至雲端！`, 'success');
         }
 
-        // 後台修改領取人姓名並同步
         async function editClaimedBy(badgeNo) {
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
@@ -802,7 +878,11 @@
         }
 
         function viewCard(badgeNo) {
-            showCardModal(badgeNo);
+            if (!sessionBadges.includes(badgeNo)) {
+                sessionBadges.push(badgeNo);
+                updateMultiCardBar();
+            }
+            openSessionCardsModal(sessionBadges.indexOf(badgeNo));
         }
 
         function renderTable() {
