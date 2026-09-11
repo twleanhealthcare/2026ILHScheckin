@@ -551,9 +551,7 @@
         }
 
         async function openSessionCardsModal(index = 0) {
-            // 每次開卡前先抓取最新雲端狀態
             await fetchCloudAttendees();
-
             if (sessionBadges.length === 0) return;
             currentCardIndex = index;
             if (currentCardIndex < 0) currentCardIndex = 0;
@@ -640,7 +638,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 確認兌換資料袋：直接同步至雲端試算表
+        // 確認兌換資料袋：透過 syncAll 將整張名單（包含 isBagClaimed 與 claimedBy）寫回試算表
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -654,20 +652,15 @@
             confirmBtn.textContent = "⏳ 同步雲端中...";
 
             try {
-                // 發送專用 claimBag 請求至 Google Apps Script 寫入試算表
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: "claimBag",
-                        badgeNo: currentBadgeNo,
-                        claimedBy: inputName
-                    })
-                });
+                let attendees = await fetchCloudAttendees();
+                let target = attendees.find(a => a.badgeNo === currentBadgeNo);
+                if (target) {
+                    target.isBagClaimed = true;
+                    target.claimedBy = inputName;
+                }
 
-                // 強制重新從雲端抓取最新狀態
-                await fetchCloudAttendees();
+                // 透過 syncAll 將更新後的完整陣列寫回雲端試算表
+                await pushCloudAttendees(attendees);
 
                 closeClaimDialog();
                 renderCardByIndex(currentCardIndex);
@@ -687,7 +680,8 @@
         }
 
         async function toggleBagClaimStatus(badgeNo) {
-            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            let attendees = await fetchCloudAttendees();
+            let target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             const newStatus = !target.isBagClaimed;
@@ -702,21 +696,22 @@
             target.isBagClaimed = newStatus;
             target.claimedBy = claimedBy;
 
+            await pushCloudAttendees(attendees);
             renderTable();
-            await pushCloudAttendees(cachedAttendees);
             showAlert(`已更新編號 ${badgeNo} 的領取狀態並同步至雲端！`, 'success');
         }
 
         async function editClaimedBy(badgeNo) {
-            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            let attendees = await fetchCloudAttendees();
+            let target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             const newName = prompt(`修改大會編號 ${badgeNo} 的領取人姓名：`, target.claimedBy || target.fullName);
             if (newName !== null && newName.trim() !== '') {
                 target.claimedBy = newName.trim();
                 target.isBagClaimed = true;
+                await pushCloudAttendees(attendees);
                 renderTable();
-                await pushCloudAttendees(cachedAttendees);
                 showAlert(`已更新領取人為「${target.claimedBy}」並同步至雲端！`, 'success');
             }
         }
@@ -761,12 +756,13 @@
             const badgeNo = document.getElementById('manualBadge').value.trim();
             const fullName = document.getElementById('manualName').value.trim();
 
-            if (cachedAttendees.some(item => item.badgeNo === badgeNo)) {
+            let attendees = await fetchCloudAttendees();
+            if (attendees.some(item => item.badgeNo === badgeNo)) {
                 showAlert('此大會編號已存在名單中！', 'error');
                 return;
             }
 
-            cachedAttendees.push({
+            attendees.push({
                 badgeNo: badgeNo,
                 fullName: fullName,
                 maskedName: maskName(fullName),
@@ -778,10 +774,10 @@
                 claimedBy: ''
             });
 
+            await pushCloudAttendees(attendees);
             renderTable();
             closeManualModal();
-            showAlert(`已新增「${fullName}」，正在同步至雲端...`, 'success');
-            await pushCloudAttendees(cachedAttendees);
+            showAlert(`已新增「${fullName}」，已同步至雲端！`, 'success');
         }
 
         async function importCSV(e) {
@@ -794,6 +790,7 @@
                     const text = event.target.result;
                     const lines = text.split(/\r\n|\n/);
                     let count = 0;
+                    let attendees = await fetchCloudAttendees();
 
                     lines.forEach(line => {
                         if (!line.trim()) return;
@@ -802,8 +799,8 @@
                             const badgeNo = cols[0].trim();
                             const fullName = cols[1].trim();
                             
-                            if (!cachedAttendees.some(a => a.badgeNo === badgeNo)) {
-                                cachedAttendees.push({
+                            if (!attendees.some(a => a.badgeNo === badgeNo)) {
+                                attendees.push({
                                     badgeNo: badgeNo,
                                     fullName: fullName,
                                     maskedName: maskName(fullName),
@@ -819,9 +816,9 @@
                         }
                     });
 
+                    await pushCloudAttendees(attendees);
                     renderTable();
-                    showAlert(`已成功匯入 ${count} 筆名單！`, 'success');
-                    await pushCloudAttendees(cachedAttendees);
+                    showAlert(`已成功匯入 ${count} 筆名單並同步至雲端！`, 'success');
                 } catch (err) {
                     console.error(err);
                     showAlert('CSV 格式解析錯誤', 'error');
@@ -832,7 +829,8 @@
         }
 
         async function exportCheckedInCSV() {
-            const checkedInList = cachedAttendees.filter(a => a.isCheckedIn);
+            let attendees = await fetchCloudAttendees();
+            const checkedInList = attendees.filter(a => a.isCheckedIn);
             if (checkedInList.length === 0) {
                 showAlert('目前尚無已報到的人員名單可供匯出！', 'error');
                 return;
@@ -855,7 +853,8 @@
         }
 
         async function toggleCheckinStatus(badgeNo) {
-            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            let attendees = await fetchCloudAttendees();
+            let target = attendees.find(a => a.badgeNo === badgeNo);
             if (target) {
                 target.isCheckedIn = !target.isCheckedIn;
                 if (target.isCheckedIn) {
@@ -868,20 +867,21 @@
                     target.credits = '未填寫';
                 }
                 
+                await pushCloudAttendees(attendees);
                 renderTable();
-                await pushCloudAttendees(cachedAttendees);
                 showAlert(`已更新編號 ${badgeNo} 的勾稽狀態！`, 'success');
             }
         }
 
         async function deleteAttendee(badgeNo) {
-            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
+            let attendees = await fetchCloudAttendees();
+            let target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             if (confirm(`【警告】確定要刪除「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
-                cachedAttendees = cachedAttendees.filter(a => a.badgeNo !== badgeNo);
+                attendees = attendees.filter(a => a.badgeNo !== badgeNo);
+                await pushCloudAttendees(attendees);
                 renderTable();
-                await pushCloudAttendees(cachedAttendees);
                 showAlert(`已成功刪除編號 ${badgeNo}！`, 'success');
             }
         }
@@ -898,7 +898,6 @@
         async function renderTable() {
             const tbody = document.getElementById('rosterTableBody');
             if (!tbody) return;
-            // 每次進後台或點擊重新載入時強制抓取最新雲端試算表資料
             await fetchCloudAttendees();
             displayTableData(cachedAttendees);
         }
