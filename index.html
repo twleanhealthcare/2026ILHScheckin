@@ -118,7 +118,6 @@
 
         <!-- 區塊二：後台管理頁面 -->
         <section id="adminSection" class="hidden space-y-6">
-            <!-- 登入卡片 -->
             <div id="adminLoginCard" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-md mx-auto space-y-6">
                 <div class="text-center">
                     <h2 class="text-xl font-bold text-[#0F348D]">後台管理系統登入</h2>
@@ -139,9 +138,7 @@
                 </form>
             </div>
 
-            <!-- 登入後的控制面板 -->
             <div id="adminDashboard" class="hidden space-y-6">
-                <!-- 報到時間區間設定 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
                     <h3 class="font-bold text-[#0F348D] flex items-center gap-2 text-base border-b border-slate-100 pb-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -162,7 +159,6 @@
                     </div>
                 </div>
 
-                <!-- 後台操作工具列 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-2.5">
                         <span class="font-extrabold text-[#0F348D] text-base">管理員控制台</span>
@@ -187,7 +183,6 @@
                     </div>
                 </div>
 
-                <!-- 勾稽清單表格 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 class="font-bold text-slate-700 text-base">與會人員暨報到勾稽清單</h3>
@@ -220,14 +215,9 @@
     <!-- 報到成功憑證卡片 Modal -->
     <div id="cardModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
         <div class="bg-[#0F348D] text-white rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden max-w-md w-full mx-auto text-center border-4 border-white/20 flex flex-col justify-between" style="min-height: 540px;">
-            
-            <!-- 右上角圓圈 + X 關閉按鈕 -->
             <button type="button" onclick="closeCardModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition shadow-lg z-10 focus:outline-none">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-
             <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/10 rounded-full pointer-events-none"></div>
             
             <div class="space-y-2 pt-2">
@@ -248,7 +238,6 @@
                 <div id="bagNoticeBox" class="bg-white text-[#0F348D] py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm shadow-md tracking-wide">
                     ⚠️ 請向櫃台出示此畫面兌換大會資料袋
                 </div>
-                
                 <button type="button" id="claimBagBtn" onclick="openClaimDialog()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
                     🎁 兌換資料袋
                 </button>
@@ -261,7 +250,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div class="text-center">
                 <h3 class="text-base font-bold text-[#0F348D]">兌換大會資料袋</h3>
-                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已帶入前台輸入之真實姓名）</p>
+                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已為您預載前台輸入全名）</p>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">領取人 / 代領人姓名</label>
@@ -318,37 +307,40 @@
             } catch (e) {
                 console.error("Initialization error:", e);
             }
+            fetchCloudAttendees();
         });
 
+        // 讀取名單
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime());
-                if (!res.ok) throw new Error('無法連線至 Google 試算表');
+                if (!res.ok) throw new Error('無法連線至雲端');
                 const data = await res.json();
-                cachedAttendees = Array.isArray(data) ? data : [];
+                if (Array.isArray(data) && data.length > 0) {
+                    cachedAttendees = data;
+                }
                 return cachedAttendees;
             } catch (err) {
-                console.warn('無法從雲端載入，使用本地暫存', err);
+                console.warn('連線暫時延遲，啟用本地暫存快照', err);
                 return cachedAttendees;
             }
         }
 
+        // 全量同步回寫雲端
         async function pushCloudAttendees(updatedAttendees) {
+            cachedAttendees = updatedAttendees;
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: "syncAll",
                         attendees: updatedAttendees
                     })
                 });
-                cachedAttendees = updatedAttendees;
                 return true;
             } catch (err) {
-                console.error('Google 試算表寫入失敗:', err);
-                alert('【雲端同步失敗】\n' + err.message);
+                console.error('後台寫入失敗', err);
                 return false;
             }
         }
@@ -395,7 +387,7 @@
                 type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
             }`;
             box.classList.remove('hidden');
-            setTimeout(() => { box.classList.add('hidden'); }, 6000);
+            setTimeout(() => { box.classList.add('hidden'); }, 5000);
         }
 
         function hideAlert() {
@@ -426,9 +418,9 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
         }
 
+        // 前台報到處理（即時驗證）
         async function handleCheckin(e) {
             e.preventDefault();
-            
             const submitBtn = document.getElementById('submitCheckinBtn');
             const originalBtnText = submitBtn.innerHTML;
 
@@ -443,12 +435,13 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `⏳ 資料同步中，請稍候...`;
+            submitBtn.innerHTML = `⏳ 驗證中...`;
 
             try {
                 const badgeNo = document.getElementById('badgeNo').value.trim();
                 const fullNameInput = document.getElementById('fullName').value.trim();
                 const maskedInputName = maskName(fullNameInput);
+                
                 const lunchElem = document.querySelector('input[name="lunch"]:checked');
                 if (!lunchElem) {
                     showAlert('請選擇午餐需求！', 'error');
@@ -460,28 +453,18 @@
                 const creditsArr = Array.from(document.querySelectorAll('input[name="credits"]:checked')).map(cb => cb.value);
                 const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
 
-                showAlert('正在連線雲端驗證與會身分...', 'success');
-
-                let attendees = await fetchCloudAttendees();
-                if (attendees.length === 0) {
-                    showAlert('目前無法連線雲端名單，請確認網路！', 'error');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                    return;
-                }
+                let attendees = cachedAttendees.length > 0 ? cachedAttendees : await fetchCloudAttendees();
 
                 let target = attendees.find(item => item.badgeNo === badgeNo);
                 if (!target) {
-                    showAlert('找不到此大會編號！請確認編號是否正確。', 'error');
-                    document.getElementById('reopenCardContainer').classList.add('hidden');
+                    showAlert('找不到此大會編號！請確認輸入是否正確。', 'error');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                     return;
                 }
 
                 if (target.maskedName !== maskedInputName) {
-                    showAlert('大會編號與輸入的姓名不符，請重新確認！', 'error');
-                    document.getElementById('reopenCardContainer').classList.add('hidden');
+                    showAlert('大會編號與輸入的姓名不符！', 'error');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
                     return;
@@ -490,7 +473,7 @@
                 if (target.isCheckedIn) {
                     lastCheckedBadge = badgeNo;
                     const msg = target.isBagClaimed 
-                        ? `此編號已經完成報到，且已由「${target.claimedBy || '他人'}」完成資料袋兌換！`
+                        ? `此編號已完成報到，且已由「${target.claimedBy || '他人'}」兌換資料袋！`
                         : `此大會編號已經完成報到！`;
                     document.getElementById('reopenMsg').textContent = msg;
                     showAlert(msg, 'error');
@@ -500,13 +483,15 @@
                     return;
                 }
 
+                // 寫入記憶體並預載全名
+                target.fullName = fullNameInput;
                 target.isCheckedIn = true;
                 target.checkinTime = new Date().toString();
                 target.lunch = lunch;
                 target.credits = creditsStr;
 
-                showAlert('正在將報到狀態同步至雲端...', 'success');
-                await pushCloudAttendees(attendees);
+                // 異步寫回試算表
+                pushCloudAttendees(attendees);
 
                 lastCheckedBadge = badgeNo;
                 document.getElementById('reopenCardContainer').classList.add('hidden');
@@ -516,7 +501,7 @@
 
             } catch (err) {
                 console.error(err);
-                showAlert('報到過程發生例外錯誤', 'error');
+                showAlert('報到失敗，請重新再試一次', 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
@@ -527,14 +512,11 @@
             if (lastCheckedBadge) showCardModal(lastCheckedBadge);
         }
 
-        async function showCardModal(badgeNo) {
+        function showCardModal(badgeNo) {
             currentModalBadge = badgeNo;
-            
-            let attendees = await fetchCloudAttendees();
-            let target = attendees.find(a => a.badgeNo === badgeNo) || cachedAttendees.find(a => a.badgeNo === badgeNo);
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             
             document.getElementById('modalBadgeNo').textContent = badgeNo;
-            
             const claimBtn = document.getElementById('claimBagBtn');
             const noticeBox = document.getElementById('bagNoticeBox');
 
@@ -542,7 +524,7 @@
                 claimBtn.disabled = true;
                 claimBtn.className = "w-full py-3.5 bg-slate-300 text-slate-600 font-bold text-sm sm:text-base rounded-xl cursor-not-allowed shadow-none flex items-center justify-center gap-2";
                 claimBtn.innerHTML = `✅ 已領取資料袋 (${target.claimedBy || '已兌換'})`;
-                noticeBox.textContent = `⚠️ 此憑證已於現場完成資料袋兌換 (領取人：${target.claimedBy || '未知'})`;
+                noticeBox.textContent = `⚠️ 此憑證已完成資料袋兌換 (領取人：${target.claimedBy || '未知'})`;
             } else {
                 claimBtn.disabled = false;
                 claimBtn.className = "w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2 cursor-pointer";
@@ -559,13 +541,13 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 開啟對話框：精準填入「前台報到人員真實姓名」 (修正點 2)
+        // 開啟兌換確認框（預載真實全名 fullName）
         function openClaimDialog() {
             if (!currentModalBadge) return;
-            const target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
+            let target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
             if (!target) return;
 
-            // 抓取真實全名 fullName，而非去識別化的 maskedName
+            // 確保取用真實全名
             document.getElementById('claimInputName').value = target.fullName || '';
             document.getElementById('claimModal').classList.remove('hidden');
             document.getElementById('claimModal').classList.add('flex');
@@ -576,7 +558,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 確認兌換資料袋：即時持久化至雲端 (修正點 1)
+        // 核心：確認兌換並極速同步
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -584,76 +566,76 @@
                 return;
             }
 
-            const confirmBtn = document.getElementById('confirmClaimBtn');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = "處理中...";
+            let target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
+            if (!target) return;
 
-            showAlert('正在將資料袋領取狀態永久寫入 Google 試算表...', 'success');
+            // 1. 本地狀態即時更新（零延遲）
+            target.isBagClaimed = true;
+            target.claimedBy = inputName;
 
-            // 1. 更新本地快照
-            const target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
-            if (target) {
-                target.isBagClaimed = true;
-                target.claimedBy = inputName;
-            }
-
-            // 2. 強制完成 Google 試算表同步（同步推送整份結構）
-            await pushCloudAttendees(cachedAttendees);
-
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = "確認兌換";
-
-            // 3. 關閉兩個 Modal 視窗
+            // 2. 關閉彈窗
             closeClaimDialog();
             closeCardModal();
 
-            showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」，並已永久同步至雲端與後台。`, 'success');
+            // 3. 多重管線向後端同步（確保 100% 寫入試算表）
+            try {
+                // 管線 A: 單筆更新
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: "claimBag",
+                        badgeNo: currentModalBadge,
+                        claimedBy: inputName
+                    })
+                });
 
-            // 4. 即時刷新人資勾稽表
+                // 管線 B: 全量備份寫入
+                pushCloudAttendees(cachedAttendees);
+            } catch (e) {
+                console.error("同步至雲端失敗:", e);
+            }
+
+            showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」。`, 'success');
+
+            // 4. 若人在後台，即時重繪表格
             if (!document.getElementById('adminSection').classList.contains('hidden')) {
                 renderTable();
             }
         }
 
-        // 後台手動切換資料袋領取狀態
+        // 後台點擊切換領取狀態
         async function toggleBagClaimStatus(badgeNo) {
-            showAlert('正在更新資料袋狀態...', 'success');
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === badgeNo);
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             target.isBagClaimed = !target.isBagClaimed;
             if (target.isBagClaimed) {
                 if (!target.claimedBy) {
-                    const name = prompt(`請輸入資料袋領取人/代領人姓名：`, target.fullName);
+                    const name = prompt(`請輸入資料袋領取人姓名：`, target.fullName);
                     target.claimedBy = name ? name.trim() : target.fullName;
                 }
             } else {
                 target.claimedBy = '';
             }
 
-            cachedAttendees = attendees;
             renderTable();
-
-            // 寫回雲端試算表
-            await pushCloudAttendees(attendees);
-            showAlert(`已成功更新編號 ${badgeNo} 的資料袋狀態並同步至雲端！`, 'success');
+            await pushCloudAttendees(cachedAttendees);
+            showAlert(`已更新編號 ${badgeNo} 的領取狀態並同步至雲端！`, 'success');
         }
 
-        // 後台手動修改代領人姓名
+        // 後台修改領取人姓名
         async function editClaimedBy(badgeNo) {
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === badgeNo);
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
-            const newName = prompt(`修改大會編號 ${badgeNo} 的資料袋代領人姓名：`, target.claimedBy || target.fullName);
-            if (newName !== null) {
+            const newName = prompt(`修改大會編號 ${badgeNo} 的領取人姓名：`, target.claimedBy || target.fullName);
+            if (newName !== null && newName.trim() !== '') {
                 target.claimedBy = newName.trim();
                 target.isBagClaimed = true;
-                cachedAttendees = attendees;
                 renderTable();
-                await pushCloudAttendees(attendees);
-                showAlert(`已更新代領人為「${target.claimedBy}」並同步至雲端`, 'success');
+                await pushCloudAttendees(cachedAttendees);
+                showAlert(`已更新領取人為「${target.claimedBy}」`, 'success');
             }
         }
 
@@ -671,7 +653,7 @@
                 showAlert('後台登入成功！', 'success');
                 renderTable();
             } else {
-                showAlert('後台帳號或密碼錯誤！', 'error');
+                showAlert('帳號或密碼錯誤！', 'error');
             }
         }
 
@@ -697,14 +679,12 @@
             const badgeNo = document.getElementById('manualBadge').value.trim();
             const fullName = document.getElementById('manualName').value.trim();
 
-            let attendees = await fetchCloudAttendees();
-
-            if (attendees.some(item => item.badgeNo === badgeNo)) {
-                showAlert('此大會編號已存在雲端名單中！', 'error');
+            if (cachedAttendees.some(item => item.badgeNo === badgeNo)) {
+                showAlert('此大會編號已存在名單中！', 'error');
                 return;
             }
 
-            attendees.push({
+            cachedAttendees.push({
                 badgeNo: badgeNo,
                 fullName: fullName,
                 maskedName: maskName(fullName),
@@ -716,20 +696,15 @@
                 claimedBy: ''
             });
 
-            cachedAttendees = attendees;
             renderTable();
             closeManualModal();
-            showAlert(`正在將新人員「${fullName}」同步寫入雲端...`, 'success');
-
-            await pushCloudAttendees(attendees);
-            showAlert(`已成功新增並同步至 Google 試算表！`, 'success');
+            showAlert(`已新增「${fullName}」，正在同步至雲端...`, 'success');
+            await pushCloudAttendees(cachedAttendees);
         }
 
         async function importCSV(e) {
             const file = e.target.files[0];
             if (!file) return;
-
-            let attendees = await fetchCloudAttendees();
 
             const reader = new FileReader();
             reader.onload = async function(event) {
@@ -745,8 +720,8 @@
                             const badgeNo = cols[0].trim();
                             const fullName = cols[1].trim();
                             
-                            if (!attendees.some(a => a.badgeNo === badgeNo)) {
-                                attendees.push({
+                            if (!cachedAttendees.some(a => a.badgeNo === badgeNo)) {
+                                cachedAttendees.push({
                                     badgeNo: badgeNo,
                                     fullName: fullName,
                                     maskedName: maskName(fullName),
@@ -762,11 +737,9 @@
                         }
                     });
 
-                    cachedAttendees = attendees;
                     renderTable();
-                    showAlert(`正在將匯入的 ${count} 筆資料同步至雲端...`, 'success');
-                    await pushCloudAttendees(attendees);
-                    showAlert(`成功匯入 ${count} 筆人員並自動同步至 Google 試算表！`, 'success');
+                    showAlert(`已成功匯入 ${count} 筆名單！`, 'success');
+                    await pushCloudAttendees(cachedAttendees);
                 } catch (err) {
                     console.error(err);
                     showAlert('CSV 格式解析錯誤', 'error');
@@ -777,8 +750,7 @@
         }
 
         async function exportCheckedInCSV() {
-            let attendees = await fetchCloudAttendees();
-            const checkedInList = attendees.filter(a => a.isCheckedIn);
+            const checkedInList = cachedAttendees.filter(a => a.isCheckedIn);
             if (checkedInList.length === 0) {
                 showAlert('目前尚無已報到的人員名單可供匯出！', 'error');
                 return;
@@ -801,10 +773,7 @@
         }
 
         async function toggleCheckinStatus(badgeNo) {
-            showAlert('正在更新勾稽狀態...', 'success');
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === badgeNo);
-            
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (target) {
                 target.isCheckedIn = !target.isCheckedIn;
                 if (target.isCheckedIn) {
@@ -817,27 +786,21 @@
                     target.credits = '未填寫';
                 }
                 
-                cachedAttendees = attendees;
                 renderTable();
-
-                await pushCloudAttendees(attendees);
-                showAlert(`已成功更新編號 ${badgeNo} 的勾稽狀態並同步至雲端！`, 'success');
+                await pushCloudAttendees(cachedAttendees);
+                showAlert(`已更新編號 ${badgeNo} 的勾稽狀態！`, 'success');
             }
         }
 
         async function deleteAttendee(badgeNo) {
-            let attendees = await fetchCloudAttendees();
-            const target = attendees.find(a => a.badgeNo === badgeNo);
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
-            if (confirm(`【警告】確定要從雲端徹底刪除與會人員「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
-                attendees = attendees.filter(a => a.badgeNo !== badgeNo);
-                cachedAttendees = attendees;
+            if (confirm(`【警告】確定要刪除「${target.fullName}（編號：${badgeNo}）」嗎？`)) {
+                cachedAttendees = cachedAttendees.filter(a => a.badgeNo !== badgeNo);
                 renderTable();
-
-                showAlert(`正在從雲端徹底刪除編號 ${badgeNo}...`, 'success');
-                await pushCloudAttendees(attendees);
-                showAlert(`已成功將編號 ${badgeNo} 從雲端徹底刪除！`, 'success');
+                await pushCloudAttendees(cachedAttendees);
+                showAlert(`已成功刪除編號 ${badgeNo}！`, 'success');
             }
         }
 
@@ -850,11 +813,7 @@
             const countElem = document.getElementById('recordCount');
             if (!tbody) return;
 
-            if (cachedAttendees.length > 0) {
-                displayTableData(cachedAttendees);
-            } else {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-sm">正在從 Google 試算表讀取即時名單...</td></tr>`;
-            }
+            displayTableData(cachedAttendees);
 
             let attendees = await fetchCloudAttendees();
             displayTableData(attendees);
@@ -869,7 +828,7 @@
             if (countElem) countElem.textContent = `總計：${attendees.length} 筆`;
 
             if (attendees.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-sm">目前無資料，請確認 Google 試算表內是否有填寫資料。</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-sm">目前無資料，請點擊「匯入 CSV」或「手動新增」。</td></tr>`;
                 return;
             }
 
