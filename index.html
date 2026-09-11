@@ -439,6 +439,7 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
         }
 
+        // 1. 報到人員寫入雲端與更新後台
         async function handleCheckin(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitCheckinBtn');
@@ -515,6 +516,7 @@
                 }
                 updateMultiCardBar();
 
+                // 同步寫入雲端
                 await sendToCloud({
                     action: "updateCheckin",
                     badgeNo: badgeNo,
@@ -529,7 +531,7 @@
                 
                 openSessionCardsModal(sessionBadges.indexOf(badgeNo));
                 document.getElementById('checkinForm').reset();
-                showAlert('🎉 報到成功！已將此與會者加入您的憑證清單。', 'success');
+                showAlert('🎉 報到成功！已成功寫入雲端與後台。', 'success');
 
             } catch (err) {
                 console.error(err);
@@ -621,6 +623,7 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
+        // 3. 代領人預載邏輯：第 1 張卡片帶入該卡 fullName，第 2 張卡片起強制帶入第 1 位報到者的 fullName
         function openClaimDialog() {
             if (sessionBadges.length === 0) return;
 
@@ -649,6 +652,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
+        // 4. 寫入 isBagClaimed / claimedBy 兩個欄位
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -678,7 +682,7 @@
                 closeClaimDialog();
                 renderCardByIndex(currentCardIndex);
 
-                showAlert(`🎉 兌換成功！已同步寫入雲端試算表。`, 'success');
+                showAlert(`🎉 兌換成功！已寫入試算表 isBagClaimed / claimedBy 欄位。`, 'success');
 
                 if (!document.getElementById('adminSection').classList.contains('hidden')) {
                     renderTable();
@@ -876,6 +880,7 @@
             showAlert('已成功匯出已報到人員清單！', 'success');
         }
 
+        // 2. 點擊取消功能：自動同步修改雲端資料為「未報到」，後台顯示即時更新
         async function toggleCheckinStatus(badgeNo) {
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (target) {
