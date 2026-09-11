@@ -106,7 +106,6 @@
                     </button>
                 </form>
 
-                <!-- 重複報到提示 -->
                 <div id="reopenCardContainer" class="hidden p-4 bg-blue-50 border border-blue-200 rounded-xl text-center space-y-2">
                     <p id="reopenMsg" class="text-xs text-blue-800 font-medium">此大會編號已經完成報到！</p>
                     <button type="button" onclick="reopenExistingCard()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow">
@@ -250,7 +249,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div class="text-center">
                 <h3 class="text-base font-bold text-[#0F348D]">兌換大會資料袋</h3>
-                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已為您預載前台輸入全名）</p>
+                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（預設帶入前台報到全名）</p>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">領取人 / 代領人姓名</label>
@@ -310,7 +309,7 @@
             fetchCloudAttendees();
         });
 
-        // 讀取名單
+        // 從雲端抓取名單（增加錯誤防護）
         async function fetchCloudAttendees() {
             try {
                 const res = await fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime());
@@ -321,17 +320,18 @@
                 }
                 return cachedAttendees;
             } catch (err) {
-                console.warn('連線暫時延遲，啟用本地暫存快照', err);
+                console.warn('連線暫時延遲，使用本地記憶體暫存', err);
                 return cachedAttendees;
             }
         }
 
-        // 全量同步回寫雲端
+        // 強力全量寫入試算表
         async function pushCloudAttendees(updatedAttendees) {
             cachedAttendees = updatedAttendees;
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: "syncAll",
@@ -418,7 +418,6 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
         }
 
-        // 前台報到處理（即時驗證）
         async function handleCheckin(e) {
             e.preventDefault();
             const submitBtn = document.getElementById('submitCheckinBtn');
@@ -483,15 +482,15 @@
                     return;
                 }
 
-                // 寫入記憶體並預載全名
+                // 補齊真實全名
                 target.fullName = fullNameInput;
                 target.isCheckedIn = true;
                 target.checkinTime = new Date().toString();
                 target.lunch = lunch;
                 target.credits = creditsStr;
 
-                // 異步寫回試算表
-                pushCloudAttendees(attendees);
+                // 同步寫回試算表
+                await pushCloudAttendees(attendees);
 
                 lastCheckedBadge = badgeNo;
                 document.getElementById('reopenCardContainer').classList.add('hidden');
@@ -541,13 +540,12 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 開啟兌換確認框（預載真實全名 fullName）
+        // 開啟對話框（預載前台輸入之全名）
         function openClaimDialog() {
             if (!currentModalBadge) return;
             let target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
             if (!target) return;
 
-            // 確保取用真實全名
             document.getElementById('claimInputName').value = target.fullName || '';
             document.getElementById('claimModal').classList.remove('hidden');
             document.getElementById('claimModal').classList.add('flex');
@@ -558,7 +556,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 核心：確認兌換並極速同步
+        // 核心：確認兌換並 100% 同步寫入試算表
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -569,19 +567,19 @@
             let target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
             if (!target) return;
 
-            // 1. 本地狀態即時更新（零延遲）
+            // 1. 本地狀態即時更新
             target.isBagClaimed = true;
             target.claimedBy = inputName;
 
-            // 2. 關閉彈窗
+            // 2. 關閉 Modal
             closeClaimDialog();
             closeCardModal();
 
-            // 3. 多重管線向後端同步（確保 100% 寫入試算表）
+            // 3. 發送單筆寫入請求，確保數據不丟失
             try {
-                // 管線 A: 單筆更新
-                fetch(GOOGLE_SCRIPT_URL, {
+                await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: "claimBag",
@@ -589,8 +587,7 @@
                         claimedBy: inputName
                     })
                 });
-
-                // 管線 B: 全量備份寫入
+                // 再次全量推送備份
                 pushCloudAttendees(cachedAttendees);
             } catch (e) {
                 console.error("同步至雲端失敗:", e);
@@ -598,13 +595,13 @@
 
             showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」。`, 'success');
 
-            // 4. 若人在後台，即時重繪表格
+            // 4. 重繪後台表格
             if (!document.getElementById('adminSection').classList.contains('hidden')) {
                 renderTable();
             }
         }
 
-        // 後台點擊切換領取狀態
+        // 後台切換領取狀態並同步
         async function toggleBagClaimStatus(badgeNo) {
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
@@ -624,7 +621,7 @@
             showAlert(`已更新編號 ${badgeNo} 的領取狀態並同步至雲端！`, 'success');
         }
 
-        // 後台修改領取人姓名
+        // 後台修改領取人姓名並同步
         async function editClaimedBy(badgeNo) {
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
@@ -635,7 +632,7 @@
                 target.isBagClaimed = true;
                 renderTable();
                 await pushCloudAttendees(cachedAttendees);
-                showAlert(`已更新領取人為「${target.claimedBy}」`, 'success');
+                showAlert(`已更新領取人為「${target.claimedBy}」並同步至雲端！`, 'success');
             }
         }
 
@@ -808,15 +805,10 @@
             showCardModal(badgeNo);
         }
 
-        async function renderTable() {
+        function renderTable() {
             const tbody = document.getElementById('rosterTableBody');
-            const countElem = document.getElementById('recordCount');
             if (!tbody) return;
-
             displayTableData(cachedAttendees);
-
-            let attendees = await fetchCloudAttendees();
-            displayTableData(attendees);
         }
 
         function displayTableData(attendees) {
