@@ -339,7 +339,7 @@
                 }
                 return cachedAttendees;
             } catch (err) {
-                console.warn('連線暫時延遲，使用本地記憶體暫存', err);
+                console.warn('連線暫時延遲', err);
                 return cachedAttendees;
             }
         }
@@ -470,7 +470,7 @@
                 const creditsArr = Array.from(document.querySelectorAll('input[name="credits"]:checked')).map(cb => cb.value);
                 const creditsStr = creditsArr.length > 0 ? creditsArr.join(', ') : '無';
 
-                let attendees = cachedAttendees.length > 0 ? cachedAttendees : await fetchCloudAttendees();
+                let attendees = await fetchCloudAttendees();
 
                 let target = attendees.find(item => item.badgeNo === badgeNo);
                 if (!target) {
@@ -550,7 +550,10 @@
             }
         }
 
-        function openSessionCardsModal(index = 0) {
+        async function openSessionCardsModal(index = 0) {
+            // 每次開卡前先抓取最新雲端狀態
+            await fetchCloudAttendees();
+
             if (sessionBadges.length === 0) return;
             currentCardIndex = index;
             if (currentCardIndex < 0) currentCardIndex = 0;
@@ -609,7 +612,6 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 開啟兌換對話框：第 1 張卡片帶自己名字，第 2 張以後全面強制帶入「第一位報到者的名字」
         function openClaimDialog() {
             if (sessionBadges.length === 0) return;
 
@@ -638,6 +640,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
+        // 確認兌換資料袋：直接同步至雲端試算表
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -646,16 +649,12 @@
             }
 
             const currentBadgeNo = sessionBadges[currentCardIndex];
-            let target = cachedAttendees.find(a => a.badgeNo === currentBadgeNo);
-            if (!target) return;
-
-            target.isBagClaimed = true;
-            target.claimedBy = inputName;
-
-            closeClaimDialog();
-            renderCardByIndex(currentCardIndex);
+            const confirmBtn = document.getElementById('confirmClaimBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "⏳ 同步雲端中...";
 
             try {
+                // 發送專用 claimBag 請求至 Google Apps Script 寫入試算表
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -666,15 +665,24 @@
                         claimedBy: inputName
                     })
                 });
-                pushCloudAttendees(cachedAttendees);
+
+                // 強制重新從雲端抓取最新狀態
+                await fetchCloudAttendees();
+
+                closeClaimDialog();
+                renderCardByIndex(currentCardIndex);
+
+                showAlert(`🎉 兌換成功！已同步更新雲端資料袋狀態。`, 'success');
+
+                if (!document.getElementById('adminSection').classList.contains('hidden')) {
+                    renderTable();
+                }
             } catch (e) {
                 console.error("同步至雲端失敗:", e);
-            }
-
-            showAlert(`🎉 兌換成功！已完成 ${target.fullName || currentBadgeNo} 的資料袋領取登記。`, 'success');
-
-            if (!document.getElementById('adminSection').classList.contains('hidden')) {
-                renderTable();
+                showAlert('連線雲端失敗，請檢查網路後重試', 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = "確認兌換";
             }
         }
 
@@ -682,15 +690,17 @@
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
-            target.isBagClaimed = !target.isBagClaimed;
-            if (target.isBagClaimed) {
-                if (!target.claimedBy) {
-                    const name = prompt(`請輸入資料袋領取人姓名：`, target.fullName);
-                    target.claimedBy = name ? name.trim() : target.fullName;
-                }
-            } else {
-                target.claimedBy = '';
+            const newStatus = !target.isBagClaimed;
+            let claimedBy = target.claimedBy;
+            if (newStatus && !claimedBy) {
+                const name = prompt(`請輸入資料袋領取人姓名：`, target.fullName);
+                claimedBy = name ? name.trim() : target.fullName;
+            } else if (!newStatus) {
+                claimedBy = '';
             }
+
+            target.isBagClaimed = newStatus;
+            target.claimedBy = claimedBy;
 
             renderTable();
             await pushCloudAttendees(cachedAttendees);
@@ -876,7 +886,8 @@
             }
         }
 
-        function viewCard(badgeNo) {
+        async function viewCard(badgeNo) {
+            await fetchCloudAttendees();
             if (!sessionBadges.includes(badgeNo)) {
                 sessionBadges.push(badgeNo);
                 updateMultiCardBar();
@@ -884,9 +895,11 @@
             openSessionCardsModal(sessionBadges.indexOf(badgeNo));
         }
 
-        function renderTable() {
+        async function renderTable() {
             const tbody = document.getElementById('rosterTableBody');
             if (!tbody) return;
+            // 每次進後台或點擊重新載入時強制抓取最新雲端試算表資料
+            await fetchCloudAttendees();
             displayTableData(cachedAttendees);
         }
 
