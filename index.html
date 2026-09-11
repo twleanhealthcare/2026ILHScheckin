@@ -267,7 +267,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div class="text-center">
                 <h3 class="text-base font-bold text-[#0F348D]">兌換大會資料袋</h3>
-                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已為您預載前台輸入全名）</p>
+                <p id="claimModalSubText" class="text-xs text-slate-400 mt-1">已自動帶入代領人姓名</p>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">領取人 / 代領人姓名</label>
@@ -314,7 +314,6 @@
         let cachedAttendees = [];
         let lastCheckedBadge = '';
         
-        // 多人報到：暫存本裝置已報到的所有人卡片 (大會編號清單)
         let sessionBadges = [];
         let currentCardIndex = 0;
 
@@ -507,7 +506,6 @@
                 target.lunch = lunch;
                 target.credits = creditsStr;
 
-                // 多人報到卡片收集：若此編號不在本裝置清單中則加入
                 if (!sessionBadges.includes(badgeNo)) {
                     sessionBadges.push(badgeNo);
                 }
@@ -518,7 +516,6 @@
                 lastCheckedBadge = badgeNo;
                 document.getElementById('reopenCardContainer').classList.add('hidden');
                 
-                // 開啟剛剛報到的這張卡片
                 openSessionCardsModal(sessionBadges.indexOf(badgeNo));
                 document.getElementById('checkinForm').reset();
                 showAlert('🎉 報到成功！已將此與會者加入您的憑證清單。', 'success');
@@ -532,7 +529,6 @@
             }
         }
 
-        // 更新頂部「多人報到快捷提示列」
         function updateMultiCardBar() {
             const bar = document.getElementById('multiCardBar');
             const countText = document.getElementById('multiCardCountText');
@@ -554,7 +550,6 @@
             }
         }
 
-        // 開啟本裝置目前暫存的卡片 (帶索引)
         function openSessionCardsModal(index = 0) {
             if (sessionBadges.length === 0) return;
             currentCardIndex = index;
@@ -567,7 +562,6 @@
             document.getElementById('cardModal').classList.add('flex');
         }
 
-        // 渲染指定索引的卡片
         function renderCardByIndex(index) {
             const badgeNo = sessionBadges[index];
             let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
@@ -591,7 +585,6 @@
                 noticeBox.textContent = `⚠️ 請向櫃台出示此畫面兌換大會資料袋`;
             }
 
-            // 更新計數器與導覽列
             document.getElementById('cardCounterText').textContent = `${index + 1} / ${sessionBadges.length}`;
             const navControls = document.getElementById('cardNavControls');
             if (sessionBadges.length > 1) {
@@ -603,7 +596,6 @@
             }
         }
 
-        // 上一張 / 下一張卡片切換
         function navigateCard(direction) {
             let newIndex = currentCardIndex + direction;
             if (newIndex >= 0 && newIndex < sessionBadges.length) {
@@ -617,14 +609,26 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 開啟兌換對話框：精準預載目前顯示卡片對應的「與會者姓名」
+        // 開啟兌換對話框：第 1 張卡片帶自己名字，第 2 張以後全面強制帶入「第一位報到者的名字」
         function openClaimDialog() {
-            const badgeNo = sessionBadges[currentCardIndex];
-            if (!badgeNo) return;
-            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
-            if (!target) return;
+            if (sessionBadges.length === 0) return;
 
-            document.getElementById('claimInputName').value = target.fullName || '';
+            let defaultClaimerName = "";
+            const firstBadgeNo = sessionBadges[0];
+            const firstTarget = cachedAttendees.find(a => a.badgeNo === firstBadgeNo);
+            const firstName = firstTarget ? firstTarget.fullName : "";
+
+            if (currentCardIndex === 0) {
+                const currentBadgeNo = sessionBadges[currentCardIndex];
+                let target = cachedAttendees.find(a => a.badgeNo === currentBadgeNo);
+                defaultClaimerName = target ? target.fullName : "";
+                document.getElementById('claimModalSubText').textContent = "已自動帶入本卡與會人姓名";
+            } else {
+                defaultClaimerName = firstName;
+                document.getElementById('claimModalSubText').textContent = `已自動帶入第一位報到者 (${firstName}) 作為代領人`;
+            }
+
+            document.getElementById('claimInputName').value = defaultClaimerName || '';
             document.getElementById('claimModal').classList.remove('hidden');
             document.getElementById('claimModal').classList.add('flex');
         }
@@ -634,7 +638,6 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 確認兌換資料袋
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -646,16 +649,12 @@
             let target = cachedAttendees.find(a => a.badgeNo === currentBadgeNo);
             if (!target) return;
 
-            // 1. 本地狀態更新
             target.isBagClaimed = true;
             target.claimedBy = inputName;
 
             closeClaimDialog();
-
-            // 2. 重新渲染目前這張卡片狀態（變更為已領取灰色按鈕）
             renderCardByIndex(currentCardIndex);
 
-            // 3. 發送至 Google 試算表寫入
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
