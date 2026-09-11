@@ -101,7 +101,6 @@
                         </div>
                     </div>
 
-                    <!-- 具備防重複點擊鎖定機制的按鈕 -->
                     <button type="submit" id="submitCheckinBtn" class="w-full py-3.5 bg-[#0F348D] hover:bg-blue-900 text-white font-bold rounded-xl transition shadow-md text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
                         確認送出並產生報到憑證
                     </button>
@@ -250,7 +249,6 @@
                     ⚠️ 請向櫃台出示此畫面兌換大會資料袋
                 </div>
                 
-                <!-- 兌換資料袋按鈕 -->
                 <button type="button" id="claimBagBtn" onclick="openClaimDialog()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-sm sm:text-base rounded-xl transition shadow-xl tracking-wider flex items-center justify-center gap-2">
                     🎁 兌換資料袋
                 </button>
@@ -263,7 +261,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
             <div class="text-center">
                 <h3 class="text-base font-bold text-[#0F348D]">兌換大會資料袋</h3>
-                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已自動為您預載）</p>
+                <p class="text-xs text-slate-400 mt-1">請確認領取人姓名（已帶入前台輸入之真實姓名）</p>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">領取人 / 代領人姓名</label>
@@ -428,7 +426,6 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}:${ss}`;
         }
 
-        // 需求 5：前台送出報到時停用按鈕，避免重複連擊
         async function handleCheckin(e) {
             e.preventDefault();
             
@@ -445,7 +442,6 @@
                 return;
             }
 
-            // 鎖定按鈕
             submitBtn.disabled = true;
             submitBtn.innerHTML = `⏳ 資料同步中，請稍候...`;
 
@@ -522,7 +518,6 @@
                 console.error(err);
                 showAlert('報到過程發生例外錯誤', 'error');
             } finally {
-                // 恢復按鈕狀態
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
             }
@@ -532,11 +527,9 @@
             if (lastCheckedBadge) showCardModal(lastCheckedBadge);
         }
 
-        // 需求 3：顯示憑證時即時查詢雲端狀態，若已領取則鎖死按鈕
         async function showCardModal(badgeNo) {
             currentModalBadge = badgeNo;
             
-            // 強制抓取雲端最新資料
             let attendees = await fetchCloudAttendees();
             let target = attendees.find(a => a.badgeNo === badgeNo) || cachedAttendees.find(a => a.badgeNo === badgeNo);
             
@@ -566,13 +559,14 @@
             document.getElementById('cardModal').classList.remove('flex');
         }
 
-        // 需求 1：開啟兌換視窗時，預設填入與會者「自己鍵入的完整姓名」
+        // 開啟對話框：精準填入「前台報到人員真實姓名」 (修正點 2)
         function openClaimDialog() {
             if (!currentModalBadge) return;
             const target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
             if (!target) return;
 
-            document.getElementById('claimInputName').value = target.fullName;
+            // 抓取真實全名 fullName，而非去識別化的 maskedName
+            document.getElementById('claimInputName').value = target.fullName || '';
             document.getElementById('claimModal').classList.remove('hidden');
             document.getElementById('claimModal').classList.add('flex');
         }
@@ -582,7 +576,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 需求 2 & 4：確認兌換後寫入雲端與後台，並自動關閉對話框與報到卡片
+        // 確認兌換資料袋：即時持久化至雲端 (修正點 1)
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -594,50 +588,36 @@
             confirmBtn.disabled = true;
             confirmBtn.textContent = "處理中...";
 
-            showAlert('正在將資料袋領取狀態同步寫入 Google 試算表...', 'success');
+            showAlert('正在將資料袋領取狀態永久寫入 Google 試算表...', 'success');
 
+            // 1. 更新本地快照
             const target = cachedAttendees.find(a => a.badgeNo === currentModalBadge);
             if (target) {
                 target.isBagClaimed = true;
                 target.claimedBy = inputName;
             }
 
-            try {
-                // 向後端 Apps Script 寫入單筆資料袋核銷狀態
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: "claimBag",
-                        badgeNo: currentModalBadge,
-                        claimedBy: inputName
-                    })
-                });
+            // 2. 強制完成 Google 試算表同步（同步推送整份結構）
+            await pushCloudAttendees(cachedAttendees);
 
-                // 同步發送整批備份更新，雙重保障寫入
-                await pushCloudAttendees(cachedAttendees);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "確認兌換";
 
-            } catch (err) {
-                console.error("寫入 Google 試算表時發生例外:", err);
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = "確認兌換";
-            }
-
-            // 關閉確認視窗與報到卡片
+            // 3. 關閉兩個 Modal 視窗
             closeClaimDialog();
             closeCardModal();
 
-            showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」，並即時同步至雲端與後台。`, 'success');
+            showAlert(`🎉 兌換成功！資料袋領取人已登記為「${inputName}」，並已永久同步至雲端與後台。`, 'success');
 
-            // 重新繪製後台表格
+            // 4. 即時刷新人資勾稽表
             if (!document.getElementById('adminSection').classList.contains('hidden')) {
                 renderTable();
             }
         }
 
+        // 後台手動切換資料袋領取狀態
         async function toggleBagClaimStatus(badgeNo) {
+            showAlert('正在更新資料袋狀態...', 'success');
             let attendees = await fetchCloudAttendees();
             const target = attendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
@@ -654,10 +634,13 @@
 
             cachedAttendees = attendees;
             renderTable();
+
+            // 寫回雲端試算表
             await pushCloudAttendees(attendees);
-            showAlert(`已更新編號 ${badgeNo} 的資料袋狀態！`, 'success');
+            showAlert(`已成功更新編號 ${badgeNo} 的資料袋狀態並同步至雲端！`, 'success');
         }
 
+        // 後台手動修改代領人姓名
         async function editClaimedBy(badgeNo) {
             let attendees = await fetchCloudAttendees();
             const target = attendees.find(a => a.badgeNo === badgeNo);
@@ -670,7 +653,7 @@
                 cachedAttendees = attendees;
                 renderTable();
                 await pushCloudAttendees(attendees);
-                showAlert(`已更新代領人為「${target.claimedBy}」`, 'success');
+                showAlert(`已更新代領人為「${target.claimedBy}」並同步至雲端`, 'success');
             }
         }
 
@@ -906,8 +889,8 @@
                     <td class="py-4 px-4 text-slate-600 text-xs">${item.credits}</td>
                     <td class="py-4 px-4 text-center">
                         ${item.isBagClaimed 
-                            ? `<button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold shadow-sm transition">已領取</button>`
-                            : `<button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full text-xs font-bold transition">未領取</button>`}
+                            ? `<button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-bold shadow-sm transition cursor-pointer">已領取</button>`
+                            : `<button type="button" onclick="toggleBagClaimStatus('${item.badgeNo}')" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full text-xs font-bold transition cursor-pointer">未領取</button>`}
                     </td>
                     <td class="py-4 px-4 text-slate-700 text-xs font-medium">
                         ${item.claimedBy 
