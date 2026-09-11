@@ -344,23 +344,27 @@
             }
         }
 
-        async function pushCloudAttendees(updatedAttendees) {
-            cachedAttendees = updatedAttendees;
+        // 發送 API 請求給 GAS (使用 URL-encoded 確保百分之百抵達)
+        async function sendToCloud(payload) {
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: "syncAll",
-                        attendees: updatedAttendees
-                    })
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'data=' + encodeURIComponent(JSON.stringify(payload))
                 });
                 return true;
             } catch (err) {
-                console.error('後台寫入失敗', err);
+                console.error('雲端同步失敗', err);
                 return false;
             }
+        }
+
+        async function pushCloudAttendees(updatedAttendees) {
+            cachedAttendees = updatedAttendees;
+            return await sendToCloud({
+                action: "syncAll",
+                attendees: updatedAttendees
+            });
         }
 
         function saveCheckinTimeSettings() {
@@ -638,7 +642,7 @@
             document.getElementById('claimModal').classList.remove('flex');
         }
 
-        // 確認兌換資料袋：透過 syncAll 將整張名單（包含 isBagClaimed 與 claimedBy）寫回試算表
+        // 精準兌換：傳送單筆 claimBag 指令給 GAS，精確寫入 G 欄與 H 欄
         async function confirmClaimBag() {
             const inputName = document.getElementById('claimInputName').value.trim();
             if (!inputName) {
@@ -652,21 +656,27 @@
             confirmBtn.textContent = "⏳ 同步雲端中...";
 
             try {
-                let attendees = await fetchCloudAttendees();
-                let target = attendees.find(a => a.badgeNo === currentBadgeNo);
+                // 1. 發送精準單筆更新指令給 GAS
+                await sendToCloud({
+                    action: "claimBag",
+                    badgeNo: currentBadgeNo,
+                    isBagClaimed: true,
+                    claimedBy: inputName
+                });
+
+                // 2. 本地記憶體同步更新
+                let target = cachedAttendees.find(a => a.badgeNo === currentBadgeNo);
                 if (target) {
                     target.isBagClaimed = true;
                     target.claimedBy = inputName;
                 }
 
-                // 透過 syncAll 將更新後的完整陣列寫回雲端試算表
-                await pushCloudAttendees(attendees);
-
                 closeClaimDialog();
                 renderCardByIndex(currentCardIndex);
 
-                showAlert(`🎉 兌換成功！已同步更新雲端資料袋狀態。`, 'success');
+                showAlert(`🎉 兌換成功！已同步寫入雲端試算表。`, 'success');
 
+                // 3. 後台介面立刻重新繪製
                 if (!document.getElementById('adminSection').classList.contains('hidden')) {
                     renderTable();
                 }
@@ -679,9 +689,9 @@
             }
         }
 
+        // 後台 / 憑證單筆取消或切換領取狀態
         async function toggleBagClaimStatus(badgeNo) {
-            let attendees = await fetchCloudAttendees();
-            let target = attendees.find(a => a.badgeNo === badgeNo);
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             const newStatus = !target.isBagClaimed;
@@ -696,21 +706,33 @@
             target.isBagClaimed = newStatus;
             target.claimedBy = claimedBy;
 
-            await pushCloudAttendees(attendees);
+            await sendToCloud({
+                action: "claimBag",
+                badgeNo: badgeNo,
+                isBagClaimed: newStatus,
+                claimedBy: claimedBy
+            });
+
             renderTable();
             showAlert(`已更新編號 ${badgeNo} 的領取狀態並同步至雲端！`, 'success');
         }
 
         async function editClaimedBy(badgeNo) {
-            let attendees = await fetchCloudAttendees();
-            let target = attendees.find(a => a.badgeNo === badgeNo);
+            let target = cachedAttendees.find(a => a.badgeNo === badgeNo);
             if (!target) return;
 
             const newName = prompt(`修改大會編號 ${badgeNo} 的領取人姓名：`, target.claimedBy || target.fullName);
             if (newName !== null && newName.trim() !== '') {
                 target.claimedBy = newName.trim();
                 target.isBagClaimed = true;
-                await pushCloudAttendees(attendees);
+                
+                await sendToCloud({
+                    action: "claimBag",
+                    badgeNo: badgeNo,
+                    isBagClaimed: true,
+                    claimedBy: target.claimedBy
+                });
+
                 renderTable();
                 showAlert(`已更新領取人為「${target.claimedBy}」並同步至雲端！`, 'success');
             }
