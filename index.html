@@ -544,7 +544,7 @@
         // 發布到 GitHub 後，所有使用者的手機打開網頁都會自動連線至此雲端資料庫！
         // =========================================================================
         const CONFIG = {
-            GAS_URL: 'https://script.google.com/macros/s/AKfycbyeZzb5qo3nIIDbWmnTWrbpTpOtkQXVvpFi24KRaHp6ERqQUj4cMRB59IkcGZM0o-m7BQ/exec'
+            GAS_URL: 'https://script.google.com/macros/s/YOUR_APPS_SCRIPT_ID_HERE/exec'
         };
 
         // 全域狀態管理 (完全不使用 LocalStorage，純粹記憶體與雲端同步)
@@ -712,21 +712,18 @@
                 state.currentActiveCardIndex = state.deviceCards.length - 1;
             }
 
-            saveLocalState();
             updateDeviceCount();
 
-            // 同步雲端試算表 (不阻礙卡片即時顯示)
+            // 背景非同步寫入雲端 Google 試算表（零延遲傳送）
             if (state.gasUrl) {
                 syncCheckInToGas(attendee);
             }
 
-            // 恢復按鈕並開啟卡片 Modal
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-address-card"></i><span>確認送出並產生報到卡片</span>`;
-                document.getElementById('attendeeName').value = '';
-                openCardModal();
-            }, 300);
+            // 立即恢復按鈕並開啟卡片 Modal
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-address-card"></i><span>確認送出並產生報到卡片</span>`;
+            document.getElementById('attendeeName').value = '';
+            openCardModal();
         }
 
         /* 2.8 檢視/更新本裝置多人員名單 */
@@ -869,7 +866,6 @@
         function saveTimeWindow() {
             state.windowStart = document.getElementById('windowStartInput').value;
             state.windowEnd = document.getElementById('windowEndInput').value;
-            saveLocalState();
             checkTimeWindow();
             showToast('報到時段設定已更新。', 'success');
         }
