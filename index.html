@@ -520,7 +520,7 @@
         };
 
         // =========================================================================
-        // 2. 系統狀態管理 (完全不儲存於 LocalStorage)
+        // 2. 系統狀態管理
         // =========================================================================
         let state = {
             attendees: [],
@@ -532,6 +532,27 @@
         };
 
         let isAdminLoggedIn = false;
+
+        // 本裝置報到卡片 ID 清單保存 (僅用於重新整理時復原本機卡片)
+        function saveDeviceCardIds() {
+            try {
+                const ids = state.deviceCards.map(c => String(c.id));
+                localStorage.setItem('lean_summit_device_card_ids', JSON.stringify(ids));
+            } catch(e) {}
+        }
+
+        function restoreDeviceCardsFromSync() {
+            try {
+                const savedIdsJson = localStorage.getItem('lean_summit_device_card_ids');
+                if (!savedIdsJson) return;
+                const savedIds = JSON.parse(savedIdsJson);
+                if (Array.isArray(savedIds) && savedIds.length > 0) {
+                    // 從雲端最新同步的名單中，比對並復原屬於本裝置的已報到卡片與最新狀態
+                    state.deviceCards = state.attendees.filter(a => savedIds.includes(String(a.id)) && a.isCheckedIn);
+                    updateDeviceCount();
+                }
+            } catch(e) {}
+        }
 
         // 頁面載入完成時，自動初始化並嘗試與 Google 雲端連線
         window.addEventListener('DOMContentLoaded', () => {
@@ -591,6 +612,7 @@
                 }
                 state.currentActiveCardIndex = cardIndex;
                 openCardModal();
+                saveDeviceCardIds();
                 updateDeviceCount();
                 showToast('此與會人員已報到過！已為您再次開啟報到卡片。', 'info');
                 return;
@@ -630,8 +652,9 @@
                 state.currentActiveCardIndex = state.deviceCards.length - 1;
             }
 
-            // 即時反應介面
+            // 即時反應介面與記錄裝置 ID
             openCardModal();
+            saveDeviceCardIds();
             updateDeviceCount();
             if (isAdminLoggedIn) renderAdminTable();
 
@@ -799,6 +822,7 @@
 
             closeBagModal();
             renderActiveCardContent();
+            saveDeviceCardIds();
             updateDeviceCount();
             if (isAdminLoggedIn) renderAdminTable();
 
@@ -1060,6 +1084,7 @@
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     state.attendees = data;
+                    restoreDeviceCardsFromSync();
                     renderAdminTable();
                     if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Connected`;
                     showToast(`已成功同步雲端試算表資料 (${data.length} 筆)`, 'success');
