@@ -97,13 +97,14 @@
             </div>
         </div>
 
-        <!-- 重複報到提醒窗格 -->
+        <!-- 重複報到提醒窗格 (含資料袋領取狀態) -->
         <div id="duplicateNoticeBanner" class="hidden mb-6 p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center space-x-3 text-amber-900">
-                <i class="fa-solid fa-circle-exclamation text-amber-600 text-2xl flex-shrink-0"></i>
+            <div class="flex items-start space-x-3 text-amber-900">
+                <i class="fa-solid fa-circle-exclamation text-amber-600 text-2xl flex-shrink-0 mt-0.5"></i>
                 <div>
                     <h4 class="font-bold text-base" id="duplicateNameText">與會人員已報到</h4>
-                    <p class="text-sm font-semibold text-amber-700" id="duplicateTimeText">已於 00:00 報到</p>
+                    <p class="text-xs sm:text-sm font-semibold text-amber-800 mt-0.5" id="duplicateTimeText">報到時間：--</p>
+                    <p class="text-xs sm:text-sm font-semibold mt-1" id="duplicateBagStatusText">大會資料袋：--</p>
                 </div>
             </div>
             <button onclick="reopenDuplicateCard()" class="w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl shadow transition whitespace-nowrap flex items-center justify-center space-x-1.5">
@@ -534,6 +535,17 @@
             currentActiveCardIndex: 0
         };
 
+        // 取得當前裝置時間 formatted as YYYY/MM/DD HH:mm
+        function getFormattedNow() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             loadDeviceCardIds();
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
@@ -566,7 +578,7 @@
                 const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]');
                 state.deviceCards = [];
                 savedIds.forEach(id => {
-                    const matched = state.attendees.find(a => a.id === id);
+                    const matched = state.attendees.find(a => a.id === id && a.isCheckedIn);
                     if (matched) state.deviceCards.push(matched);
                 });
             } catch (e) {
@@ -579,9 +591,11 @@
                 const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]');
                 state.deviceCards = [];
                 savedIds.forEach(id => {
-                    const matched = state.attendees.find(a => a.id === id);
+                    // 僅還原該裝置報到且目前依然處於「已報到」狀態的人員
+                    const matched = state.attendees.find(a => a.id === id && a.isCheckedIn);
                     if (matched) state.deviceCards.push(matched);
                 });
+                saveDeviceCardIds();
                 updateDeviceCount();
             } catch (e) {
                 console.error("Restore failed", e);
@@ -608,8 +622,20 @@
             let attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
 
             if (attendee && attendee.isCheckedIn) {
+                // 已報到的重複提示處理
                 document.getElementById('duplicateNameText').textContent = `${attendee.name} 先生/女士已完成報到`;
-                document.getElementById('duplicateTimeText').textContent = `已於 ${attendee.checkInTime || '先前'} 完成報到程序`;
+                document.getElementById('duplicateTimeText').textContent = `報到時間：${attendee.checkInTime || '先前'}`;
+
+                const duplicateBagEl = document.getElementById('duplicateBagStatusText');
+                if (attendee.bagCollected) {
+                    const collector = attendee.bagCollectorName || attendee.name;
+                    duplicateBagEl.className = "text-xs sm:text-sm font-bold text-emerald-700 mt-1";
+                    duplicateBagEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>大會資料袋：已由 <span class="underline">${collector}</span> 領取`;
+                } else {
+                    duplicateBagEl.className = "text-xs sm:text-sm font-bold text-amber-700 mt-1";
+                    duplicateBagEl.innerHTML = `<i class="fa-solid fa-box-archive text-amber-600 mr-1.5"></i>大會資料袋：尚未領取，請至大會服務櫃檯出示報到卡片領取`;
+                }
+
                 document.getElementById('duplicateNoticeBanner').classList.remove('hidden');
 
                 if (!state.deviceCards.some(c => c.id === attendee.id)) {
@@ -623,7 +649,7 @@
 
             document.getElementById('duplicateNoticeBanner').classList.add('hidden');
 
-            const nowTimeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const nowTimeStr = getFormattedNow();
 
             if (!attendee) {
                 const newNum = state.attendees.length + 1;
@@ -666,7 +692,7 @@
         function reopenDuplicateCard() {
             const inputName = document.getElementById('attendeeName').value.trim();
             const attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
-            if (attendee) {
+            if (attendee && attendee.isCheckedIn) {
                 const cardIndex = state.deviceCards.findIndex(c => c.id === attendee.id);
                 if (cardIndex !== -1) {
                     state.currentActiveCardIndex = cardIndex;
@@ -761,6 +787,7 @@
             countSpan.textContent = state.deviceCards.length;
             list.innerHTML = '';
 
+            // 僅在同裝置 2 人（含）以上報到時才顯示頂部標題與人數說明
             if (state.deviceCards.length >= 2) {
                 header.classList.remove('hidden');
             } else {
@@ -945,7 +972,7 @@
                             ${att.isCheckedIn ? '已報到' : '未報到'}
                         </span>
                     </td>
-                    <td class="p-3 text-slate-500">${att.checkInTime || '-'}</td>
+                    <td class="p-3 text-slate-500 font-mono text-[11px]">${att.checkInTime || '-'}</td>
                     <td class="p-3">${att.lunch || '-'}</td>
                     <td class="p-3">${(att.cme && att.cme.length) ? att.cme.join(', ') : '無'}</td>
                     <td class="p-3">
@@ -975,14 +1002,22 @@
             if (att) {
                 att.isCheckedIn = !att.isCheckedIn;
                 if (att.isCheckedIn) {
-                    att.checkInTime = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    att.checkInTime = getFormattedNow();
+                    if (!state.deviceCards.some(c => c.id === att.id)) {
+                        state.deviceCards.push(att);
+                    }
                 } else {
+                    // 取消報到：清空所有報到記錄，並將該卡片從本裝置清單中移除
                     att.checkInTime = '';
                     att.lunch = '';
                     att.cme = [];
                     att.bagCollected = false;
                     att.bagCollectorName = '';
+                    state.deviceCards = state.deviceCards.filter(c => c.id !== id);
                 }
+
+                saveDeviceCardIds();
+                updateDeviceCount();
                 renderAdminTable();
                 showToast(`已更新 ${att.name} 報到狀態`, 'info');
                 if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncCheckInToGas(att);
@@ -995,7 +1030,16 @@
                 att.bagCollected = !att.bagCollected;
                 if (!att.bagCollected) att.bagCollectorName = '';
                 else if (!att.bagCollectorName) att.bagCollectorName = att.name;
+                
+                // 同步本裝置卡片狀態
+                const devCard = state.deviceCards.find(c => c.id === id);
+                if (devCard) {
+                    devCard.bagCollected = att.bagCollected;
+                    devCard.bagCollectorName = att.bagCollectorName;
+                }
+
                 renderAdminTable();
+                updateDeviceCount();
                 showToast(`已更新 ${att.name} 資料袋狀態`, 'info');
                 if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncBagToGas(att);
             }
@@ -1003,6 +1047,9 @@
 
         function deleteAttendee(id) {
             state.attendees = state.attendees.filter(a => a.id !== id);
+            state.deviceCards = state.deviceCards.filter(c => c.id !== id);
+            saveDeviceCardIds();
+            updateDeviceCount();
             renderAdminTable();
             showToast('已刪除該名與會人員資料', 'info');
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncDeleteToGas(id);
