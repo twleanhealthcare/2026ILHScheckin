@@ -28,7 +28,6 @@
         }
     </script>
     <style>
-        /* Custom scrollbar and modal styles */
         body {
             background-color: #F8FAFC;
             user-select: none;
@@ -37,22 +36,17 @@
         .card-shadow {
             box-shadow: 0 10px 25px -5px rgba(15, 52, 141, 0.1), 0 8px 10px -6px rgba(15, 52, 141, 0.05);
         }
-        .text-xxs {
-            font-size: 10px;
-            line-height: 12px;
-        }
         .huge-id {
-            font-size: 64px;
+            font-size: 60px;
             line-height: 1;
             font-weight: 800;
             letter-spacing: -1px;
         }
         @media (max-width: 480px) {
             .huge-id {
-                font-size: 52px;
+                font-size: 50px;
             }
         }
-        /* Custom modal backdrop animation */
         .modal-backdrop {
             background-color: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(4px);
@@ -75,7 +69,7 @@
             </div>
             
             <div class="flex items-center space-x-2">
-                <!-- 後台登入 / 切換按鈕 -->
+                <!-- 後台登入 / 登出按鈕 -->
                 <button id="navAdminBtn" onclick="openAdminLoginModal()" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-white/10 hover:bg-white/20 border border-white/20 transition flex items-center space-x-1.5">
                     <i class="fa-solid fa-lock text-blue-200"></i>
                     <span>後台管理</span>
@@ -234,7 +228,7 @@
                 <!-- 動態注入分頁 -->
             </div>
 
-            <!-- 報到卡片主體 (規格精準對齊需求) -->
+            <!-- 報到卡片主體 -->
             <div class="p-6 text-center space-y-4">
                 
                 <!-- 3.2 要求 1: 2026精實醫療國際高峰會 (10px) -->
@@ -242,7 +236,7 @@
                     2026精實醫療國際高峰會
                 </div>
 
-                <!-- 3.2 要求 2: 報到卡片以生效 (加入綠色底色圖案 / 10px) -->
+                <!-- 3.2 要求 2: 報到卡片以生效 (10px) -->
                 <div class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wide">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                     <span>報到卡片已生效</span>
@@ -254,7 +248,7 @@
                     <h3 id="cardAttendeeName" class="text-2xl font-black text-slate-900 tracking-tight">--</h3>
                 </div>
 
-                <!-- 3.2 要求 4: 編號 (50px以上，盡量充滿整個版面) -->
+                <!-- 3.2 要求 4: 編號 (50px以上) -->
                 <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">與會報到編號</p>
                     <div id="cardAttendeeId" class="huge-id text-primary font-black tracking-tighter my-1">
@@ -460,7 +454,7 @@
                             </span>
                         </div>
                         
-                        <!-- 搜尋與篩選 -->
+                        <!-- 搜尋 -->
                         <div class="w-full sm:w-auto flex items-center space-x-2">
                             <div class="relative flex-1 sm:w-64">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
@@ -496,7 +490,7 @@
         </div>
     </div>
 
-    <!-- 新增與會人員 Modal -->
+    <!-- 新增人員 Modal -->
     <div id="addAttendeeModal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
         <div class="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl">
             <h3 class="font-bold text-slate-900 text-base mb-4">新增與會人員名單</h3>
@@ -525,34 +519,27 @@
         </div>
     </div>
 
-    <!-- 通用自訂 Message Toast Modal (替代 alert) -->
+    <!-- 自訂 Toast 訊息 Modal -->
     <div id="customToast" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 transition transform duration-200">
         <i id="toastIcon" class="fa-solid fa-circle-info text-blue-400"></i>
         <span id="toastMessage" class="text-xs font-medium">訊息</span>
     </div>
 
-    <!-- 頁尾聲明 -->
+    <!-- 頁尾 -->
     <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
         <p>© 2026 Lean International Medical Summit (ASIA). All rights reserved.</p>
     </footer>
 
     <!-- ==================== 系統核心 JavaScript ==================== -->
     <script>
-        // =========================================================================
-        // 【GitHub Pages 部署設定】
-        // 請將下方 GAS_URL 替換為您在 Apps Script 部署獲得的 Web App 網址。
-        // 發布到 GitHub 後，所有使用者的手機打開網頁都會自動連線至此雲端資料庫！
-        // =========================================================================
+        // GitHub Pages 雲端 URL 設定 (貼上 Apps Script 發布網址)
         const CONFIG = {
             GAS_URL: 'https://script.google.com/macros/s/YOUR_APPS_SCRIPT_ID_HERE/exec'
         };
 
-        // 全域狀態管理 (完全不使用 LocalStorage，純粹記憶體與雲端同步)
+        // 全域狀態管理 (無 LocalStorage 依賴)
         let state = {
-            attendees: [
-                { id: 'A-001', name: '張大明', isCheckedIn: false, checkInTime: '', lunch: '葷食', cme: ['醫師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' },
-                { id: 'A-002', name: '李美華', isCheckedIn: false, checkInTime: '', lunch: '素食', cme: ['護理師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' }
-            ],
+            attendees: [],
             deviceCards: [],
             currentActiveCardIndex: 0,
             gasUrl: CONFIG.GAS_URL,
@@ -562,7 +549,7 @@
 
         let isAdminLoggedIn = false;
 
-        /* 6. 鎖定網頁右鍵與 F12 檢查元素功能，防止密碼洩漏 */
+        // 鎖定網頁右鍵與 F12
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
@@ -570,12 +557,11 @@
             }
         });
 
-        // 頁面初次載入：徹底向雲端取得最新與會人員資料庫
+        // 頁面初次載入向雲端同步資料
         window.addEventListener('DOMContentLoaded', () => {
             checkTimeWindow();
             updateDeviceCount();
             
-            // 開頁即自動連線雲端 (若有填寫 GAS_URL)
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
                 syncFromGas();
             } else {
@@ -583,7 +569,7 @@
             }
         });
 
-        /* 3. 報到卡片 Modal 顯示與關閉控制 */
+        /* 報到卡片 Modal 控制 */
         function openCardModal() {
             if (state.deviceCards.length > 0) {
                 document.getElementById('cardModal').classList.remove('hidden');
@@ -649,11 +635,10 @@
             }
         }
 
-        /* 2.5 & 2.6 與會者線上報到處理 */
+        /* 與會者線上報到處理 */
         async function handleCheckInSubmit(e) {
             e.preventDefault();
 
-            // 時間窗口驗證
             if (!checkTimeWindow()) {
                 showToast('目前非報到開放時段，無法辦理線上報到！', 'error');
                 return;
@@ -664,17 +649,14 @@
 
             const submitBtn = document.getElementById('submitCheckInBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>連線勾稽驗證中...`;
 
             const selectedLunch = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
             const selectedCme = Array.from(document.querySelectorAll('input[name="cmeOption"]:checked')).map(cb => cb.value);
             const nowTime = new Date().toLocaleString('zh-TW', { hour12: false });
 
-            // 本地名單勾稽對照
             let attendee = state.attendees.find(a => a.name.trim() === nameInput);
 
             if (!attendee) {
-                // 自動新增一筆新號碼
                 const nextNum = state.attendees.length + 1;
                 const newId = `A-${String(nextNum).padStart(3, '0')}`;
                 attendee = {
@@ -690,7 +672,6 @@
                 state.attendees.push(attendee);
                 showToast(`已建立新報到紀錄 (${newId})`, 'success');
             } else {
-                // 已存在名單
                 if (attendee.isCheckedIn) {
                     showToast(`提示：${nameInput} 之前已經完成過報到！`, 'warning');
                 } else {
@@ -702,7 +683,6 @@
                 }
             }
 
-            // 加入本裝置記憶
             const existingDeviceCardIndex = state.deviceCards.findIndex(c => c.name === attendee.name);
             if (existingDeviceCardIndex >= 0) {
                 state.deviceCards[existingDeviceCardIndex] = attendee;
@@ -714,19 +694,16 @@
 
             updateDeviceCount();
 
-            // 背景非同步寫入雲端 Google 試算表（零延遲傳送）
+            // 背景同步至雲端 (非同步)
             if (state.gasUrl) {
                 syncCheckInToGas(attendee);
             }
 
-            // 立即恢復按鈕並開啟卡片 Modal
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `<i class="fa-solid fa-address-card"></i><span>確認送出並產生報到卡片</span>`;
             document.getElementById('attendeeName').value = '';
             openCardModal();
         }
 
-        /* 2.8 檢視/更新本裝置多人員名單 */
         function updateDeviceCount() {
             const container = document.getElementById('deviceCardsContainer');
             const list = document.getElementById('deviceCardsList');
@@ -766,15 +743,13 @@
             });
         }
 
-        /* 3.5 & 3.6 兌換資料袋 Modal 邏輯 */
+        /* 兌換資料袋 Modal 邏輯 */
         function openBagModal() {
             if (state.deviceCards.length === 0) return;
             const currentCard = state.deviceCards[state.currentActiveCardIndex];
             const input = document.getElementById('collectorNameInput');
 
-            // 3.6 預代領取人姓名規則
             if (state.deviceCards.length > 1 && state.currentActiveCardIndex > 0) {
-                // 第二張卡片起預代第一張卡片的與會人員姓名
                 input.value = state.deviceCards[0].name;
             } else {
                 input.value = currentCard.name;
@@ -798,7 +773,6 @@
             currentCard.bagCollected = true;
             currentCard.bagCollectorName = collectorName;
 
-            // 更新全域狀態
             const att = state.attendees.find(a => a.id === currentCard.id);
             if (att) {
                 att.bagCollected = true;
@@ -812,13 +786,12 @@
 
             showToast('已完成資料袋兌換紀錄！', 'success');
 
-            // 同步雲端
             if (state.gasUrl) {
                 syncBagToGas(currentCard);
             }
         }
 
-        /* 4.1 後台管理登入驗證 (twlean / lean25553000!) */
+        /* 後台管理登入 */
         function openAdminLoginModal() {
             if (isAdminLoggedIn) {
                 document.getElementById('adminConsoleModal').classList.remove('hidden');
@@ -843,7 +816,6 @@
                 document.getElementById('navAdminBtn').classList.add('hidden');
                 document.getElementById('navLogoutBtn').classList.remove('hidden');
                 
-                // 載入後台控制項
                 document.getElementById('gasUrlInput').value = state.gasUrl;
                 document.getElementById('windowStartInput').value = state.windowStart;
                 document.getElementById('windowEndInput').value = state.windowEnd;
@@ -862,7 +834,7 @@
             showToast('已安全登出管理後台。', 'info');
         }
 
-        /* 4.2 設定報到開放時段 */
+        /* 設定報到時段 */
         function saveTimeWindow() {
             state.windowStart = document.getElementById('windowStartInput').value;
             state.windowEnd = document.getElementById('windowEndInput').value;
@@ -893,7 +865,7 @@
             return isOpen;
         }
 
-        /* 4.5 渲染後台與會人員表格 */
+        /* 渲染後台與會人員表格 */
         function renderAdminTable() {
             const tbody = document.getElementById('adminTableBody');
             const searchKeyword = (document.getElementById('adminSearchInput')?.value || '').toLowerCase();
@@ -970,13 +942,11 @@
             renderAdminTable();
             showToast('已刪除該名與會人員資料', 'info');
 
-            // 同步刪除雲端試算表對應資料
             if (state.gasUrl) {
                 syncDeleteToGas(id);
             }
         }
 
-        // 新增人員 Modal
         function openAddAttendeeModal() {
             document.getElementById('addAttendeeModal').classList.remove('hidden');
         }
@@ -1003,7 +973,6 @@
             closeAddAttendeeModal();
             showToast('新增與會人員成功！', 'success');
 
-            // 同步新增資料至雲端試算表
             if (state.gasUrl) {
                 syncAddAttendeeToGas(newAttendee);
             }
@@ -1011,9 +980,9 @@
 
         function importSampleAttendees() {
             const samples = [
-                { id: 'A-003', name: '陳國強', isCheckedIn: false, checkInTime: '', lunch: '葷食', cme: ['醫師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' },
-                { id: 'A-004', name: '林志豪', isCheckedIn: false, checkInTime: '', lunch: '素食', cme: ['公務人員'], bagCollected: false, bagCollectorName: '' },
-                { id: 'A-005', name: '黃雅婷', isCheckedIn: false, checkInTime: '', lunch: '不用餐', cme: ['台灣醫療品質協會'], bagCollected: false, bagCollectorName: '' }
+                { id: 'A-001', name: '張大明', isCheckedIn: false, checkInTime: '', lunch: '葷食', cme: ['醫師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' },
+                { id: 'A-002', name: '李美華', isCheckedIn: false, checkInTime: '', lunch: '素食', cme: ['護理師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' },
+                { id: 'A-003', name: '陳國強', isCheckedIn: false, checkInTime: '', lunch: '葷食', cme: ['醫師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' }
             ];
             samples.forEach(s => {
                 if (!state.attendees.some(a => a.id === s.id)) {
@@ -1025,61 +994,33 @@
             showToast('已匯入測試範例名單並同步至雲端！', 'success');
         }
 
-        function syncCheckInToGas(attendee) {
-            if (!state.gasUrl) return;
+        /* 雲端 HTTP 通訊封裝與同步 */
+        function postToGas(payload) {
+            if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) return;
             fetch(state.gasUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'checkin',
-                    data: attendee
-                })
-            }).catch(e => console.error("Sync post failed:", e));
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            }).catch(e => console.error("GAS Sync error:", e));
+        }
+
+        function syncCheckInToGas(attendee) {
+            postToGas({ action: 'checkin', data: attendee });
         }
 
         function syncBagToGas(attendee) {
-            if (!state.gasUrl) return;
-            fetch(state.gasUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'updateBag',
-                    data: attendee
-                })
-            }).catch(e => console.error("Sync bag post failed:", e));
+            postToGas({ action: 'updateBag', data: attendee });
         }
 
-        /* 後台手動新增人員同步至 GAS */
         function syncAddAttendeeToGas(attendee) {
-            if (!state.gasUrl) return;
-            fetch(state.gasUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'addAttendee',
-                    data: attendee
-                })
-            }).catch(e => console.error("Sync add post failed:", e));
+            postToGas({ action: 'addAttendee', data: attendee });
         }
 
-        /* 後台手動刪除人員同步至 GAS */
         function syncDeleteToGas(id) {
-            if (!state.gasUrl) return;
-            fetch(state.gasUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'deleteAttendee',
-                    data: { id: id }
-                })
-            }).catch(e => console.error("Sync delete post failed:", e));
+            postToGas({ action: 'deleteAttendee', data: { id: id } });
         }
 
-        /* 從雲端 GAS 載入/同步全體與會人員資料 (跨裝置中央同步) */
         async function syncFromGas() {
             if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) return;
             const badge = document.getElementById('syncStatusBadge');
@@ -1099,7 +1040,6 @@
             }
         }
 
-        /* 設定與測試後台 Google 試算表 URL 網址 */
         function saveGasUrl() {
             const url = document.getElementById('gasUrlInput').value.trim();
             if (!url) return;
@@ -1108,7 +1048,6 @@
             showToast('已更新 Google 試算表串接網址並開始同步！', 'success');
         }
 
-        /* 匯出全體與會人員名單為 CSV 報表 */
         function exportToCSV() {
             if (!state.attendees.length) {
                 showToast('目前無與會人員資料可供匯出', 'warning');
@@ -1127,7 +1066,6 @@
             showToast('已成功匯出 CSV 報表！', 'success');
         }
 
-        /* 自訂 Toast 訊息提示元件 */
         function showToast(msg, type = 'info') {
             const toast = document.getElementById('customToast');
             const toastMsg = document.getElementById('toastMessage');
