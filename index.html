@@ -206,9 +206,9 @@
             </form>
         </div>
 
-        <!-- 本裝置已報到人員列表 (僅同裝置 2 人或以上時顯示) -->
+        <!-- 本裝置已報到人員列表 (單人時僅顯示卡片，隱藏標題文字；雙人以上才顯示標題與計數) -->
         <div id="deviceCardsContainer" class="mt-8 hidden">
-            <div class="flex items-center justify-between mb-3 px-1">
+            <div id="deviceCardsHeader" class="flex items-center justify-between mb-3 px-1 hidden">
                 <h3 class="text-sm font-bold text-slate-700 flex items-center">
                     <i class="fa-solid fa-users text-primary mr-2"></i>
                     <span>本裝置已報到人員列表 (<span id="deviceCardCount">0</span>)</span>
@@ -514,206 +514,180 @@
 
     <script>
         // =========================================================================
-        // 🌐 雲端 Google Apps Script 串接設定 (發布至 GitHub Pages 前請在此貼上網址)
+        // 🌐 雲端 Google Apps Script 串接設定 (請在此處單引號內貼上您的 Apps Script 網址)
         // =========================================================================
         const CONFIG = {
-            // 請將您的 Google Apps Script 部署 URL 貼於下方單引號內：
             GAS_URL: 'https://script.google.com/macros/s/AKfycbz_y6Uurpzqmo1EGz_4t66O66M22_orgxEW9BwrrwD0PjM23C2YzBZj9GGnHF-fnfPxjg/exec'
         };
 
         // =========================================================================
-        // 核心狀態管理與初始化
+        // 全局狀態與初始化
         // =========================================================================
-        const state = {
-            gasUrl: CONFIG.GAS_URL,
-            attendees: [],
-            deviceCards: [],
-            currentActiveCardIndex: 0,
-            lastDuplicateAttendee: null,
-            windowStart: '',
-            windowEnd: ''
-        };
-
         let isAdminLoggedIn = false;
 
-        function formatDisplayId(id) {
-            if (!id) return '001';
-            const num = parseInt(id, 10);
-            if (!isNaN(num)) {
-                return String(num).padStart(3, '0');
-            }
-            return String(id);
-        }
-
-        // 載入該裝置上已報到的人員 ID 清單 (僅存 ID 供 F5 重新整理後還原)
-        function loadDeviceCardIds() {
-            try {
-                const stored = localStorage.getItem('lean_summit_device_ids');
-                return stored ? JSON.parse(stored) : [];
-            } catch(e) {
-                return [];
-            }
-        }
-
-        function saveDeviceCardIds() {
-            try {
-                const ids = state.deviceCards.map(c => c.id);
-                localStorage.setItem('lean_summit_device_ids', JSON.stringify(ids));
-            } catch(e) {}
-        }
-
-        function restoreDeviceCardsFromSync() {
-            const savedIds = loadDeviceCardIds();
-            if (savedIds.length === 0) return;
-            
-            const restored = [];
-            savedIds.forEach(id => {
-                const att = state.attendees.find(a => a.id === id || formatDisplayId(a.id) === formatDisplayId(id));
-                if (att && att.isCheckedIn) {
-                    restored.push({
-                        id: att.id,
-                        name: att.name,
-                        checkInTime: att.checkInTime,
-                        bagCollected: att.bagCollected || false,
-                        bagCollectorName: att.bagCollectorName || ''
-                    });
-                }
-            });
-            state.deviceCards = restored;
-            updateDeviceCount();
-        }
+        const state = {
+            gasUrl: CONFIG.GAS_URL,
+            windowStart: '',
+            windowEnd: '',
+            attendees: [],
+            deviceCards: [],
+            currentActiveCardIndex: 0
+        };
 
         window.addEventListener('DOMContentLoaded', () => {
-            checkTimeWindow();
+            loadDeviceCardIds();
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
                 syncFromGas();
+            } else {
+                updateDeviceCount();
             }
         });
 
+        // 格式化 3 位數編號顯示 (如 001, 002)
+        function formatDisplayId(rawId) {
+            if (!rawId) return '001';
+            const num = parseInt(String(rawId).replace(/\D/g, ''), 10);
+            if (!isNaN(num)) {
+                return String(num).padStart(3, '0');
+            }
+            return String(rawId);
+        }
+
         // =========================================================================
-        // 前台報到表單邏輯
+        // 本裝置報到卡片記憶機制 (依據 ID)
+        // =========================================================================
+        function saveDeviceCardIds() {
+            const ids = state.deviceCards.map(c => c.id);
+            localStorage.setItem('device_card_ids', JSON.stringify(ids));
+        }
+
+        function loadDeviceCardIds() {
+            try {
+                const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]');
+                state.deviceCards = [];
+                savedIds.forEach(id => {
+                    const matched = state.attendees.find(a => a.id === id);
+                    if (matched) state.deviceCards.push(matched);
+                });
+            } catch (e) {
+                console.error("Failed to load device cards", e);
+            }
+        }
+
+        function restoreDeviceCardsFromSync() {
+            try {
+                const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]');
+                state.deviceCards = [];
+                savedIds.forEach(id => {
+                    const matched = state.attendees.find(a => a.id === id);
+                    if (matched) state.deviceCards.push(matched);
+                });
+                updateDeviceCount();
+            } catch (e) {
+                console.error("Restore failed", e);
+            }
+        }
+
+        // =========================================================================
+        // 表單送出與重複報到比對
         // =========================================================================
         function handleCheckInSubmit(e) {
             e.preventDefault();
+
             if (!checkTimeWindow()) {
-                showToast('非開放報到時段，無法辦理報到！', 'warning');
+                showToast('非開放報到時段！', 'warning');
                 return;
             }
 
-            const nameInput = document.getElementById('attendeeName');
-            const name = nameInput.value.trim();
-            if (!name) return;
+            const inputName = document.getElementById('attendeeName').value.trim();
+            if (!inputName) return;
 
-            const lunch = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
-            const cmeElements = document.querySelectorAll('input[name="cmeOption"]:checked');
-            const cme = Array.from(cmeElements).map(el => el.value);
+            const selectedLunch = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
+            const selectedCme = Array.from(document.querySelectorAll('input[name="cmeOption"]:checked')).map(cb => cb.value);
 
-            let attendee = state.attendees.find(a => a.name.toLowerCase() === name.toLowerCase());
+            let attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
 
-            // 處理重複報到提醒
             if (attendee && attendee.isCheckedIn) {
-                const dupBanner = document.getElementById('duplicateNoticeBanner');
-                document.getElementById('duplicateNameText').textContent = `${attendee.name} 已報到`;
-                document.getElementById('duplicateTimeText').textContent = `已於 ${attendee.checkInTime || '先前'} 報到`;
-                dupBanner.classList.remove('hidden');
-                dupBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                state.lastDuplicateAttendee = attendee;
-                showToast(`${attendee.name} 已於先前完成報到！`, 'warning');
+                document.getElementById('duplicateNameText').textContent = `${attendee.name} 先生/女士已完成報到`;
+                document.getElementById('duplicateTimeText').textContent = `已於 ${attendee.checkInTime || '先前'} 完成報到程序`;
+                document.getElementById('duplicateNoticeBanner').classList.remove('hidden');
+
+                if (!state.deviceCards.some(c => c.id === attendee.id)) {
+                    state.deviceCards.push(attendee);
+                    saveDeviceCardIds();
+                    updateDeviceCount();
+                }
+                showToast('您先前已完成報到！已為您帶出報到紀錄。', 'warning');
                 return;
             }
+
+            document.getElementById('duplicateNoticeBanner').classList.add('hidden');
 
             const nowTimeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-            if (attendee) {
-                attendee.isCheckedIn = true;
-                attendee.checkInTime = nowTimeStr;
-                attendee.lunch = lunch;
-                attendee.cme = cme;
-            } else {
-                const nextId = String(state.attendees.length + 1).padStart(3, '0');
+            if (!attendee) {
+                const newNum = state.attendees.length + 1;
+                const generatedId = String(newNum).padStart(3, '0');
                 attendee = {
-                    id: nextId,
-                    name: name,
+                    id: generatedId,
+                    name: inputName,
                     isCheckedIn: true,
                     checkInTime: nowTimeStr,
-                    lunch: lunch,
-                    cme: cme,
+                    lunch: selectedLunch,
+                    cme: selectedCme,
                     bagCollected: false,
                     bagCollectorName: ''
                 };
                 state.attendees.push(attendee);
-            }
-
-            // 加入同裝置卡片列表
-            const existingCardIdx = state.deviceCards.findIndex(c => c.id === attendee.id || c.name === attendee.name);
-            if (existingCardIdx !== -1) {
-                state.deviceCards[existingCardIdx] = {
-                    id: attendee.id,
-                    name: attendee.name,
-                    checkInTime: attendee.checkInTime,
-                    bagCollected: attendee.bagCollected,
-                    bagCollectorName: attendee.bagCollectorName
-                };
-                state.currentActiveCardIndex = existingCardIdx;
             } else {
-                state.deviceCards.push({
-                    id: attendee.id,
-                    name: attendee.name,
-                    checkInTime: attendee.checkInTime,
-                    bagCollected: attendee.bagCollected,
-                    bagCollectorName: attendee.bagCollectorName
-                });
-                state.currentActiveCardIndex = state.deviceCards.length - 1;
+                attendee.isCheckedIn = true;
+                attendee.checkInTime = nowTimeStr;
+                attendee.lunch = selectedLunch;
+                attendee.cme = selectedCme;
             }
 
-            saveDeviceCardIds();
-            document.getElementById('duplicateNoticeBanner').classList.add('hidden');
-            
-            // 秒開報到卡片 Modal
+            if (!state.deviceCards.some(c => c.id === attendee.id)) {
+                state.deviceCards.push(attendee);
+            }
+
+            state.currentActiveCardIndex = state.deviceCards.findIndex(c => c.id === attendee.id);
+
             openCardModal();
+            saveDeviceCardIds();
             updateDeviceCount();
+
             if (isAdminLoggedIn) renderAdminTable();
 
-            nameInput.value = '';
-            showToast('報到成功！已為您產生大會報到卡片。', 'success');
-
-            // 背景非同步同步雲端
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
                 syncCheckInToGas(attendee);
             }
         }
 
         function reopenDuplicateCard() {
-            if (!state.lastDuplicateAttendee) return;
-            const att = state.lastDuplicateAttendee;
-
-            let idx = state.deviceCards.findIndex(c => c.id === att.id || c.name === att.name);
-            if (idx === -1) {
-                state.deviceCards.push({
-                    id: att.id,
-                    name: att.name,
-                    checkInTime: att.checkInTime,
-                    bagCollected: att.bagCollected || false,
-                    bagCollectorName: att.bagCollectorName || ''
-                });
-                idx = state.deviceCards.length - 1;
-                saveDeviceCardIds();
+            const inputName = document.getElementById('attendeeName').value.trim();
+            const attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
+            if (attendee) {
+                const cardIndex = state.deviceCards.findIndex(c => c.id === attendee.id);
+                if (cardIndex !== -1) {
+                    state.currentActiveCardIndex = cardIndex;
+                } else {
+                    state.deviceCards.push(attendee);
+                    state.currentActiveCardIndex = state.deviceCards.length - 1;
+                    saveDeviceCardIds();
+                    updateDeviceCount();
+                }
+                openCardModal();
             }
-            state.currentActiveCardIndex = idx;
-            openCardModal();
-            updateDeviceCount();
         }
 
         // =========================================================================
-        // 報到卡片 Modal 邏輯
+        // 報到卡片 Modal 渲染
         // =========================================================================
         function openCardModal() {
             if (state.deviceCards.length === 0) return;
-            const modal = document.getElementById('cardModal');
-            modal.classList.remove('hidden');
             renderCardTabs();
             renderActiveCardContent();
+            document.getElementById('cardModal').classList.remove('hidden');
         }
 
         function closeCardModal() {
@@ -732,19 +706,17 @@
 
             state.deviceCards.forEach((card, idx) => {
                 const btn = document.createElement('button');
-                const isActive = idx === state.currentActiveCardIndex;
-                btn.className = `px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center space-x-1 ${
-                    isActive ? 'bg-white text-primary shadow' : 'bg-blue-900/50 text-blue-200 hover:bg-blue-800/50'
+                btn.className = `px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${
+                    idx === state.currentActiveCardIndex
+                    ? 'bg-white text-primary shadow'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
                 }`;
+                btn.textContent = card.name;
                 btn.onclick = () => {
                     state.currentActiveCardIndex = idx;
                     renderCardTabs();
                     renderActiveCardContent();
                 };
-                btn.innerHTML = `
-                    <span>${card.name}</span>
-                    <span class="opacity-75">(${formatDisplayId(card.id)})</span>
-                `;
                 tabsContainer.appendChild(btn);
             });
         }
@@ -762,25 +734,25 @@
 
             if (currentCard.bagCollected) {
                 redeemBtn.disabled = true;
-                redeemBtnText.textContent = '已完成大會資料袋兌換';
-                bagInfo.textContent = `領取紀錄：${currentCard.bagCollectorName || currentCard.name}`;
+                redeemBtnText.textContent = '已完成資料袋兌換';
+                bagInfo.textContent = `領取/代領人：${currentCard.bagCollectorName || currentCard.name}`;
             } else {
                 redeemBtn.disabled = false;
                 redeemBtnText.textContent = '兌換資料袋';
-                bagInfo.textContent = '';
+                bagInfo.textContent = '出示畫面予櫃檯人員點擊兌換';
             }
         }
 
         // =========================================================================
-        // 本裝置已報到人員列表 (僅同裝置 2 人或以上時顯示)
+        // 本裝置已報到人員列表邏輯
         // =========================================================================
         function updateDeviceCount() {
             const container = document.getElementById('deviceCardsContainer');
+            const header = document.getElementById('deviceCardsHeader');
             const list = document.getElementById('deviceCardsList');
             const countSpan = document.getElementById('deviceCardCount');
 
-            // 僅在同裝置報到人數為 2 人或 2 人以上時顯示列表與提示
-            if (state.deviceCards.length < 2) {
+            if (state.deviceCards.length === 0) {
                 container.classList.add('hidden');
                 return;
             }
@@ -788,6 +760,12 @@
             container.classList.remove('hidden');
             countSpan.textContent = state.deviceCards.length;
             list.innerHTML = '';
+
+            if (state.deviceCards.length >= 2) {
+                header.classList.remove('hidden');
+            } else {
+                header.classList.add('hidden');
+            }
 
             state.deviceCards.forEach((card, idx) => {
                 const cardDiv = document.createElement('div');
@@ -870,7 +848,7 @@
         }
 
         // =========================================================================
-        // 後台管理系統邏輯 (登入、時段、雲端同步與勾稽)
+        // 後台管理系統邏輯
         // =========================================================================
         function openAdminLoginModal() {
             if (isAdminLoggedIn) {
@@ -992,7 +970,6 @@
             });
         }
 
-        // 取消報到時，徹底還原為最原始乾淨狀態
         function toggleAttendeeCheckIn(id) {
             const att = state.attendees.find(a => a.id === id);
             if (att) {
