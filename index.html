@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2026精實國際高峰會 - 線上報到系統</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
+    <!-- Font Awesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Inter Font -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <!-- Inter & Chinese Web Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+    
     <script>
         tailwind.config = {
             theme: {
@@ -27,6 +28,7 @@
             }
         }
     </script>
+    
     <style>
         body {
             background-color: #F8FAFC;
@@ -36,30 +38,27 @@
         .card-shadow {
             box-shadow: 0 10px 25px -5px rgba(15, 52, 141, 0.1), 0 8px 10px -6px rgba(15, 52, 141, 0.05);
         }
-        .huge-id {
-            font-size: 60px;
-            line-height: 1;
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-        @media (max-width: 480px) {
-            .huge-id {
-                font-size: 50px;
-            }
-        }
         .modal-backdrop {
-            background-color: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(4px);
+            background-color: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
         }
     </style>
 </head>
 <body class="min-h-screen font-sans text-slate-800 flex flex-col justify-between">
 
-    <!-- 全域頂部導覽列 -->
     <header class="bg-primary text-white shadow-md sticky top-0 z-30">
         <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- 1. 地球圖案與大會名稱 -->
             <div class="flex items-center space-x-3">
-                <!-- 1. 地球圖案 -->
                 <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center border border-white/20 text-white text-xl">
                     <i class="fa-solid fa-earth-americas"></i>
                 </div>
@@ -69,12 +68,13 @@
                 </div>
             </div>
             
+            <!-- 2. 後台管理按鈕 (僅顯示齒輪圖案) -->
             <div class="flex items-center space-x-2">
-                <!-- 2. 後台管理按鈕 (僅顯示齒輪圖案) -->
-                <button id="navAdminBtn" onclick="openAdminLoginModal()" title="工作人員登入" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition flex items-center justify-center text-white">
+                <button id="navAdminBtn" onclick="openAdminLoginModal()" title="工作人員登入" 
+                    class="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition flex items-center justify-center text-white focus:outline-none">
                     <i class="fa-solid fa-gear text-lg"></i>
                 </button>
-                <button id="navLogoutBtn" onclick="adminLogout()" class="hidden px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-red-500/80 hover:bg-red-600 transition flex items-center space-x-1.5">
+                <button id="navLogoutBtn" onclick="adminLogout()" class="hidden px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-red-500/90 hover:bg-red-600 transition flex items-center space-x-1.5 shadow-sm">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>登出後台</span>
                 </button>
@@ -85,20 +85,19 @@
         </div>
     </header>
 
-    <!-- 主要內容區 -->
     <main class="max-w-4xl mx-auto w-full px-4 py-6 sm:py-10 flex-grow">
 
-        <!-- 報到開放時間提醒橫幅 -->
+        <!-- 報到時段限制提醒橫幅 -->
         <div id="timeNoticeBanner" class="hidden mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-start space-x-3 shadow-sm">
             <i class="fa-solid fa-clock text-amber-600 text-lg mt-0.5"></i>
             <div>
-                <h4 class="font-bold text-sm">報到時間提示</h4>
-                <p id="timeNoticeText" class="text-xs sm:text-sm mt-0.5">目前非系統設定的報到開放時間，若有問題請洽詢現場報到櫃檯。</p>
+                <h4 class="font-bold text-sm">報到開放時間提示</h4>
+                <p id="timeNoticeText" class="text-xs sm:text-sm mt-0.5">目前非大會設定之開放報到時間，若有特殊事宜請至大會服務櫃檯洽詢。</p>
             </div>
         </div>
 
         <!-- 7. 重複報到提醒窗格 -->
-        <div id="duplicateNoticeBanner" class="hidden mb-6 p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div id="duplicateNoticeBanner" class="hidden mb-6 p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center space-x-3 text-amber-900">
                 <i class="fa-solid fa-circle-exclamation text-amber-600 text-2xl flex-shrink-0"></i>
                 <div>
@@ -106,28 +105,28 @@
                     <p class="text-sm font-semibold text-amber-700" id="duplicateTimeText">已於 00:00 報到</p>
                 </div>
             </div>
-            <button onclick="reopenDuplicateCard()" class="w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl shadow transition whitespace-nowrap">
-                重新顯示報到卡片
+            <button onclick="reopenDuplicateCard()" class="w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl shadow transition whitespace-nowrap flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-id-card"></i>
+                <span>重新顯示報到卡片</span>
             </button>
         </div>
 
-        <!-- 前台與會者報到卡片表單 -->
         <div class="bg-white rounded-2xl card-shadow border border-slate-100 p-6 sm:p-10">
-            <!-- 3. 移除與會者服務與線上同步數據文字，4. 已連線雲端改英文 Connected -->
-            <div class="flex justify-between items-center mb-4">
-                <div class="text-xs text-slate-400 font-medium">2026 LEAN SUMMIT</div>
+            <!-- 3. 4. 連線狀態標籤 (使用英文 Connected) -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-xs text-slate-400 font-semibold tracking-wider">2026 LEAN SUMMIT</div>
                 <div>
-                    <span id="syncStatusBadge" class="inline-flex items-center text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    <span id="syncStatusBadge" class="inline-flex items-center text-xs text-emerald-600 font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Connected
                     </span>
                 </div>
             </div>
 
-            <!-- 5. 與會者報到文字放大置中 -->
+            <!-- 5. 與會者報到文字 (放大置中) -->
             <h2 class="text-3xl sm:text-4xl font-extrabold text-primary text-center mb-8 tracking-wide">與會者報到</h2>
 
             <form id="checkInForm" onsubmit="handleCheckInSubmit(event)" class="space-y-6">
-                <!-- 1. 姓名輸入 (6. 移除說明文字) -->
+                <!-- 姓名輸入格 -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         與會者姓名 <span class="text-red-500">*</span>
@@ -141,7 +140,7 @@
                     </div>
                 </div>
 
-                <!-- 2. 午餐選擇 -->
+                <!-- 中午用餐需求 -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         中午用餐需求 <span class="text-red-500">*</span>
@@ -171,7 +170,7 @@
                     </div>
                 </div>
 
-                <!-- 3. 教育積分需求 (複選) -->
+                <!-- 教育積分需求 (複選) -->
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         教育積分需求 <span class="text-xs font-normal text-slate-500">(可複選)</span>
@@ -196,75 +195,71 @@
                     </div>
                 </div>
 
-                <!-- 4. 送出按鈕 -->
+                <!-- 送出按鈕 -->
                 <div class="pt-2">
                     <button type="submit" id="submitCheckInBtn" class="w-full py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 active:scale-[0.99] transition duration-150 flex items-center justify-center space-x-2 text-base">
-                        <i class="fa-solid fa-address-card"></i>
+                        <i class="fa-solid fa-address-card text-lg"></i>
                         <span>確認送出並產生報到卡片</span>
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- 9. 同裝置已報到人員列表 (僅於複數人員時顯示) -->
+        <!-- 9. 10. 本裝置已報到人員列表 (僅於該裝置有複數人員報到時顯示，依領取狀態區分不同底色) -->
         <div id="deviceCardsContainer" class="mt-8 hidden">
             <div class="flex items-center justify-between mb-3 px-1">
                 <h3 class="text-sm font-bold text-slate-700 flex items-center">
                     <i class="fa-solid fa-users text-primary mr-2"></i>
                     <span>本裝置已報到人員列表 (<span id="deviceCardCount">0</span>)</span>
                 </h3>
-                <span class="text-xs text-slate-500">點擊可查看該卡片</span>
+                <span class="text-xs text-slate-500">點擊圖卡可切換顯示報到卡片</span>
             </div>
-            <!-- 10. 列表圖卡使用不同底色呈現領取狀態 -->
             <div id="deviceCardsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <!-- 動態注入同裝置已報到人員 -->
+                <!-- 動態注入同裝置已報到人員卡片 -->
             </div>
         </div>
     </main>
 
-    <!-- ==================== 8. 報到卡片 Modal 視窗 (全風格重構) ==================== -->
+    <!-- 8. 報到卡片 Modal 視窗 -->
     <div id="cardModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <!-- 8.1 背景顏色改為 #0F348D -->
         <div class="relative w-full max-w-md bg-[#0F348D] text-white rounded-3xl shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-8">
             
-            <!-- 8.3/8.8 右上角 X 關閉按鈕 (移除頁首標題列) -->
+            <!-- 8.8 右上角 X 關閉按鈕 -->
             <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xl transition">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <!-- 同裝置多人報到卡片分頁頁籤 -->
+            <!-- 多人報到卡片分頁頁籤 -->
             <div id="modalCardTabs" class="bg-blue-950/60 px-4 py-3 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-14">
                 <!-- 動態注入分頁 -->
             </div>
 
-            <!-- 報到卡片主體 -->
+            <!-- 報到卡片內容 -->
             <div class="p-6 sm:p-8 text-center space-y-6">
-                
-                <!-- 8.2 文字字體大小改為 30px -->
+                <!-- 8.2 文字字體大小 30px -->
                 <div class="text-[30px] font-bold tracking-tight text-blue-100 leading-snug">
                     2026精實醫療國際高峰會
                 </div>
 
-                <!-- 8.2 文字字體大小改為 30px -->
+                <!-- 8.2 報到卡片已生效 (30px) -->
                 <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[30px] font-bold leading-tight">
-                    <span class="w-3 h-3 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
                     <span>報到卡片已生效</span>
                 </div>
 
-                <!-- 8.2 與會人員姓名 字體大小改為 30px -->
+                <!-- 8.2 與會人員姓名 (30px) -->
                 <div class="pt-2">
                     <p class="text-[30px] text-blue-200 font-bold leading-tight mb-1">與會人員姓名</p>
                     <h3 id="cardAttendeeName" class="text-[30px] font-black text-white tracking-wide">--</h3>
                 </div>
 
-                <!-- 8.4 編號：大字體，格式為 001, 002, 003 -->
+                <!-- 8.4 編號：大字體，最多3碼 (001, 002, 003) -->
                 <div class="bg-white/10 rounded-2xl p-4 border border-white/20 my-2">
                     <div id="cardAttendeeId" class="text-7xl sm:text-8xl font-black text-amber-300 tracking-wider my-1 font-mono">
                         001
                     </div>
                 </div>
-
-                <!-- 8.5/8.6 已移除用餐與教育積分需求 -->
 
                 <!-- 3.3 提醒文字 -->
                 <div class="p-3.5 bg-amber-400/20 border border-amber-300/40 rounded-xl text-amber-200 text-xs sm:text-sm font-semibold flex items-center justify-center space-x-2">
@@ -272,7 +267,7 @@
                     <span>請向報到櫃台出示此畫面領取大會資料袋</span>
                 </div>
 
-                <!-- 8.7 兌換資料袋按鈕 (移除禮物圖案) -->
+                <!-- 8.7 兌換資料袋按鈕 (無禮物圖案) -->
                 <div class="pt-2">
                     <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-4 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition text-base disabled:bg-slate-500/50 disabled:text-slate-300 disabled:cursor-not-allowed disabled:shadow-none">
                         <span id="redeemBagBtnText">兌換資料袋</span>
@@ -280,11 +275,10 @@
                     <p id="bagCollectedInfo" class="text-xs text-blue-200 mt-2 hidden"></p>
                 </div>
             </div>
-            <!-- 8.8 已移除底部的關閉卡片按鈕 -->
         </div>
     </div>
 
-    <!-- ==================== 兌換資料袋確認 Modal ==================== -->
+    <!-- 兌換資料袋確認 Modal -->
     <div id="bagModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 border border-slate-100">
             <div class="text-center mb-5">
@@ -292,7 +286,7 @@
                     <i class="fa-solid fa-box-archive"></i>
                 </div>
                 <h3 class="text-lg font-bold text-slate-900">確認領取大會資料袋</h3>
-                <p class="text-xs text-slate-500 mt-1">請確認領取人姓名，點選後將完成兌換並鎖死。</p>
+                <p class="text-xs text-slate-500 mt-1">請確認領取人姓名，確認後將完成兌換。</p>
             </div>
 
             <div class="space-y-4">
@@ -300,7 +294,7 @@
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">領取人 / 代領人姓名</label>
                     <input type="text" id="collectorNameInput" placeholder="請輸入姓名" 
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm font-medium">
-                    <p class="text-[10px] text-slate-400 mt-1">系統已依據報到資料為您自動預代名稱。</p>
+                    <p class="text-[10px] text-slate-400 mt-1">系統已為您預代前台報到資料姓名。</p>
                 </div>
 
                 <div class="flex space-x-3 pt-2">
@@ -315,7 +309,7 @@
         </div>
     </div>
 
-    <!-- ==================== 後台管理登入 Modal ==================== -->
+    <!-- 後台管理員登入 Modal -->
     <div id="adminLoginModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4">
         <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 border border-slate-100">
             <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
@@ -347,7 +341,7 @@
         </div>
     </div>
 
-    <!-- ==================== 後台管理主控台 Modal ==================== -->
+    <!-- 後台管理主控台 Modal -->
     <div id="adminConsoleModal" class="fixed inset-0 z-40 hidden overflow-y-auto bg-slate-100">
         <div class="min-h-screen flex flex-col">
             <!-- 後台 Header -->
@@ -367,12 +361,11 @@
                 </button>
             </header>
 
-            <!-- 後台主要內容 -->
+            <!-- 後台內容 -->
             <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
-                
-                <!-- 工具功能列 -->
+                <!-- 工具列卡片網格 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- 4.2 設定報到時間 -->
+                    <!-- 設定報到時段 -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold text-slate-500 uppercase">報到開放時段</span>
@@ -390,7 +383,7 @@
                         </div>
                     </div>
 
-                    <!-- 雲端試算表 GAS 連結設定 -->
+                    <!-- Google 試算表 URL 串接 -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold text-slate-500 uppercase">Google 試算表串接 URL</span>
@@ -403,11 +396,11 @@
                         </button>
                     </div>
 
-                    <!-- 4.3 匯入/新增與會人員 -->
+                    <!-- 人員名單管理 -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
                             <span class="text-xs font-bold text-slate-500 uppercase">人員名單管理</span>
-                            <p class="text-xs text-slate-600 mt-1">新增單筆人員名單或批次測試匯入</p>
+                            <p class="text-xs text-slate-600 mt-1">新增單筆與會人員或匯入測試名單</p>
                         </div>
                         <div class="flex space-x-2 mt-3">
                             <button onclick="openAddAttendeeModal()" class="w-1/2 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-bold transition">
@@ -419,11 +412,11 @@
                         </div>
                     </div>
 
-                    <!-- 4.4 匯出報表與同步 -->
+                    <!-- 匯出與同步 -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
                             <span class="text-xs font-bold text-slate-500 uppercase">數據匯出與雲端同步</span>
-                            <p class="text-xs text-slate-600 mt-1">匯出最終 Excel / CSV 報表或同步數據</p>
+                            <p class="text-xs text-slate-600 mt-1">匯出 CSV 報表或同步雲端試算表</p>
                         </div>
                         <div class="flex space-x-2 mt-3">
                             <button onclick="exportToCSV()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
@@ -436,7 +429,7 @@
                     </div>
                 </div>
 
-                <!-- 4.5 與會人員勾稽清單表 -->
+                <!-- 與會人員勾稽清單表 -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div class="flex items-center space-x-3">
@@ -446,7 +439,6 @@
                             </span>
                         </div>
                         
-                        <!-- 搜尋 -->
                         <div class="w-full sm:w-auto flex items-center space-x-2">
                             <div class="relative flex-1 sm:w-64">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-400"></i>
@@ -456,7 +448,6 @@
                         </div>
                     </div>
 
-                    <!-- 表格區域 (RWD 橫向捲動) -->
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead>
@@ -473,7 +464,7 @@
                                 </tr>
                             </thead>
                             <tbody id="adminTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
-                                <!-- 動態渲染人員資料 -->
+                                <!-- 動態渲染與會人員 -->
                             </tbody>
                         </table>
                     </div>
@@ -488,16 +479,16 @@
             <h3 class="font-bold text-slate-900 text-base mb-4">新增與會人員名單</h3>
             <form onsubmit="handleAddAttendeeSubmit(event)" class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-semibold mb-1">編號 (例如 A-003 或 003)</label>
-                    <input type="text" id="newAttendeeId" required placeholder="003" class="w-full p-2 border rounded-lg">
+                    <label class="block font-semibold mb-1">編號 (例如 003 或 A-003)</label>
+                    <input type="text" id="newAttendeeId" required placeholder="003" class="w-full p-2 border border-slate-300 rounded-lg">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">與會人員姓名</label>
-                    <input type="text" id="newAttendeeName" required placeholder="請輸入姓名" class="w-full p-2 border rounded-lg">
+                    <input type="text" id="newAttendeeName" required placeholder="請輸入姓名" class="w-full p-2 border border-slate-300 rounded-lg">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">午餐需求</label>
-                    <select id="newAttendeeLunch" class="w-full p-2 border rounded-lg">
+                    <select id="newAttendeeLunch" class="w-full p-2 border border-slate-300 rounded-lg">
                         <option value="葷食">葷食</option>
                         <option value="素食">素食</option>
                         <option value="不用餐">不用餐</option>
@@ -522,14 +513,15 @@
         <p>© 2026 Lean International Medical Summit (ASIA). All rights reserved.</p>
     </footer>
 
-    <!-- ==================== 系統核心 JavaScript ==================== -->
     <script>
-        // GitHub Pages 雲端 URL 設定 (貼上 Apps Script 發布網址)
+        // =========================================================================
+        // 📢 請在將此檔案上傳至 GitHub Pages 前，將下方網址替換為您的 Apps Script 發布網址
+        // =========================================================================
         const CONFIG = {
-            GAS_URL: 'https://script.google.com/macros/s/YOUR_APPS_SCRIPT_ID_HERE/exec'
+            GAS_URL: 'https://script.google.com/macros/s/AKfycbzlX7LL2eDOsq_44qS-KdJKPuxzV5OkFCYZag7PyYMIbdqdrO_-KCNGETk8Fs3JUOwf-Q/exec'
         };
 
-        // 全域狀態管理 (無 LocalStorage 依賴)
+        // 全域狀態管理 (100% 雲端資料庫導向，無 LocalStorage 依賴)
         let state = {
             attendees: [],
             deviceCards: [],
@@ -542,15 +534,16 @@
         let isAdminLoggedIn = false;
         let duplicateAttendeeCache = null;
 
-        // 鎖定網頁右鍵與 F12
+        // 鎖定右鍵與 F12 檢視
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
+            if (e.key === 'F12' || 
+               (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || 
+               (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
                 e.preventDefault();
             }
         });
 
-        // 頁面初次載入向雲端同步資料
         window.addEventListener('DOMContentLoaded', () => {
             checkTimeWindow();
             updateDeviceCount();
@@ -562,7 +555,6 @@
             }
         });
 
-        /* 報到卡片 Modal 控制 */
         function openCardModal() {
             if (state.deviceCards.length > 0) {
                 document.getElementById('cardModal').classList.remove('hidden');
@@ -602,7 +594,7 @@
             });
         }
 
-        // 8.4 格式化號碼：最多 3 碼，呈現方式為 001, 002, 003
+        // 8.4 格式化編號：最多 3 碼 (001, 002, 003)
         function formatDisplayId(rawId) {
             if (!rawId) return '001';
             const digitsOnly = String(rawId).replace(/[^0-9]/g, '');
@@ -616,7 +608,6 @@
             if (!card) return;
 
             document.getElementById('cardAttendeeName').textContent = card.name;
-            // 8.4 編號大字體
             document.getElementById('cardAttendeeId').textContent = formatDisplayId(card.id);
 
             const redeemBtn = document.getElementById('redeemBagBtn');
@@ -635,7 +626,7 @@
             }
         }
 
-        /* 7. 重新顯示重複報到卡片 */
+        // 7. 重新顯示重複報到卡片
         function reopenDuplicateCard() {
             if (duplicateAttendeeCache) {
                 const idx = state.deviceCards.findIndex(c => c.name === duplicateAttendeeCache.name);
@@ -650,7 +641,6 @@
             }
         }
 
-        /* 與會者線上報到處理 */
         async function handleCheckInSubmit(e) {
             e.preventDefault();
 
@@ -681,7 +671,6 @@
                 showToast(`提示：${nameInput} 已於此前完成報到！`, 'warning');
                 submitBtn.disabled = false;
                 
-                // 加入至本裝置卡片並預備顯示
                 const existingIdx = state.deviceCards.findIndex(c => c.name === attendee.name);
                 if (existingIdx >= 0) {
                     state.currentActiveCardIndex = existingIdx;
@@ -710,7 +699,7 @@
                     bagCollectorName: ''
                 };
                 state.attendees.push(attendee);
-                showToast(`已建立新報到紀錄 (${formatDisplayId(newId)})`, 'success');
+                showToast(`已建立報到紀錄 (${formatDisplayId(newId)})`, 'success');
             } else {
                 attendee.isCheckedIn = true;
                 attendee.checkInTime = nowTime;
@@ -730,7 +719,7 @@
 
             updateDeviceCount();
 
-            // 背景同步至雲端 (非同步)
+            // 背景非同步寫入雲端
             if (state.gasUrl) {
                 syncCheckInToGas(attendee);
             }
@@ -740,8 +729,7 @@
             openCardModal();
         }
 
-        // 9. 僅在該裝置有複數人員報到 (length > 1) 時顯示清單
-        // 10. 使用不同底色圖卡呈現資料袋領取狀況
+        // 9. 10. 僅在該裝置有複數人員 (length > 1) 時顯示清單，並依領取狀態套用翡翠綠與琥珀黃底色
         function updateDeviceCount() {
             const container = document.getElementById('deviceCardsContainer');
             const list = document.getElementById('deviceCardsList');
@@ -758,7 +746,6 @@
 
             state.deviceCards.forEach((card, idx) => {
                 const cardDiv = document.createElement('div');
-                // 10. 底色區分：已領取使用翡翠綠，未領取使用琥珀黃/白色
                 const isCollected = card.bagCollected;
                 cardDiv.className = `p-4 rounded-xl border transition flex justify-between items-center cursor-pointer shadow-sm ${
                     isCollected 
@@ -789,12 +776,12 @@
             });
         }
 
-        /* 兌換資料袋 Modal 邏輯 */
         function openBagModal() {
             if (state.deviceCards.length === 0) return;
             const currentCard = state.deviceCards[state.currentActiveCardIndex];
             const input = document.getElementById('collectorNameInput');
 
+            // 3.6 如果同一裝置有多張卡片，預代第一張卡片的與會人員姓名
             if (state.deviceCards.length > 1 && state.currentActiveCardIndex > 0) {
                 input.value = state.deviceCards[0].name;
             } else {
@@ -837,7 +824,6 @@
             }
         }
 
-        /* 後台管理登入 */
         function openAdminLoginModal() {
             if (isAdminLoggedIn) {
                 document.getElementById('adminConsoleModal').classList.remove('hidden');
@@ -880,7 +866,6 @@
             showToast('已安全登出管理後台。', 'info');
         }
 
-        /* 設定報到時段 */
         function saveTimeWindow() {
             state.windowStart = document.getElementById('windowStartInput').value;
             state.windowEnd = document.getElementById('windowEndInput').value;
@@ -911,7 +896,6 @@
             return isOpen;
         }
 
-        /* 渲染後台與會人員表格 */
         function renderAdminTable() {
             const tbody = document.getElementById('adminTableBody');
             const searchKeyword = (document.getElementById('adminSearchInput')?.value || '').toLowerCase();
@@ -1040,7 +1024,6 @@
             showToast('已匯入測試範例名單並同步至雲端！', 'success');
         }
 
-        /* 雲端 HTTP 通訊封裝與同步 */
         function postToGas(payload) {
             if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) return;
             fetch(state.gasUrl, {
@@ -1068,7 +1051,10 @@
         }
 
         async function syncFromGas() {
-            if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) return;
+            if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
+                showToast('提示：請點擊後台設定 Apps Script Web App 網址以啟用雲端同步！', 'warning');
+                return;
+            }
             const badge = document.getElementById('syncStatusBadge');
             if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>Syncing...`;
 
@@ -1077,12 +1063,14 @@
                 const data = await res.json();
                 if (Array.isArray(data)) {
                     state.attendees = data;
-                    if (isAdminLoggedIn) renderAdminTable();
+                    renderAdminTable();
                     if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Connected`;
+                    showToast(`已成功同步雲端試算表資料 (${data.length} 筆)`, 'success');
                 }
             } catch (e) {
                 console.error("Sync from GAS failed:", e);
                 if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span>Offline`;
+                showToast('無法連線至雲端試算表，請確認 Web App 網址與權限設定！', 'error');
             }
         }
 
