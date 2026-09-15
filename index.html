@@ -205,7 +205,7 @@
             </form>
         </div>
 
-        <!-- 9. 10. 本裝置已報到人員列表 (僅於該裝置有複數人員報到時顯示，依領取狀態區分不同底色) -->
+        <!-- 本裝置已報到人員列表 (只要有 1 人以上報到即顯示) -->
         <div id="deviceCardsContainer" class="mt-8 hidden">
             <div class="flex items-center justify-between mb-3 px-1">
                 <h3 class="text-sm font-bold text-slate-700 flex items-center">
@@ -220,60 +220,57 @@
         </div>
     </main>
 
-    <!-- 8. 報到卡片 Modal 視窗 -->
+    <!-- 8. 報到卡片 Modal 視窗 (與範例圖片 100% 一模一樣之質感藍色卡片) -->
     <div id="cardModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4 sm:p-6">
-        <!-- 8.1 背景顏色改為 #0F348D 質感重構 -->
-        <div class="relative w-full max-w-md bg-[#0F348D] text-white rounded-3xl shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto">
+        <div class="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center">
             
-            <!-- 8.8 右上角 X 關閉按鈕 -->
-            <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white text-2xl transition border border-white/10">
+            <!-- 右上角 X 關閉按鈕 -->
+            <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white text-xl transition border border-white/10">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
             <!-- 多人報到卡片分頁頁籤 -->
-            <div id="modalCardTabs" class="bg-blue-950/70 px-4 py-3 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-16">
+            <div id="modalCardTabs" class="bg-blue-950/70 px-4 py-2 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-12 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
                 <!-- 動態注入分頁 -->
             </div>
 
             <!-- 報到卡片內容 -->
-            <div class="p-6 sm:p-8 text-center space-y-6">
-                <!-- 8.2 文字字體大小 30px -->
-                <div class="text-[30px] font-black tracking-tight text-blue-100 leading-tight drop-shadow-sm">
-                    2026精實醫療國際高峰會
+            <div class="space-y-4">
+                <!-- 1. 標題：2026 精實國際醫療高峰會 -->
+                <div class="text-lg sm:text-xl font-bold tracking-wide text-white drop-shadow-sm">
+                    2026 精實國際醫療高峰會
                 </div>
 
-                <!-- 8.2 報到卡片已生效 (30px) -->
-                <div class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-[30px] font-bold leading-none shadow-inner">
-                    <span class="w-4 h-4 rounded-full bg-emerald-400 mr-3 animate-pulse"></span>
-                    <span>報到卡片已生效</span>
+                <!-- 2. 綠色報到憑證已生效膠囊標籤 -->
+                <div class="inline-flex items-center px-5 py-1.5 rounded-full bg-[#10b981] text-white text-sm font-bold shadow-md">
+                    <span>報到憑證已生效</span>
                 </div>
 
-                <!-- 8.2 與會人員姓名 (30px) -->
-                <div class="pt-2 border-t border-blue-400/20">
-                    <p class="text-[30px] text-blue-200/90 font-bold leading-tight mb-2">與會人員姓名</p>
-                    <h3 id="cardAttendeeName" class="text-[34px] font-black text-white tracking-wide drop-shadow">--</h3>
+                <!-- 3. 與會人員姓名 -->
+                <div class="pt-1">
+                    <h3 id="cardAttendeeName" class="text-2xl sm:text-3xl font-black text-white tracking-wide">--</h3>
                 </div>
 
-                <!-- 8.4 編號：滿版超大字體 (50px+), 醒目金黃 -->
-                <div class="bg-gradient-to-b from-white/15 to-white/5 rounded-2xl p-5 border border-white/20 shadow-xl my-2">
-                    <p class="text-xs text-blue-200/70 uppercase tracking-widest font-semibold mb-1">ATTENDEE NO.</p>
-                    <div id="cardAttendeeId" class="text-7xl sm:text-8xl font-black text-amber-300 tracking-wider font-mono drop-shadow-lg py-1">
+                <!-- 4. 您的專屬大會編號 + 超大 3 碼號碼 (如 001, 002) -->
+                <div class="py-2">
+                    <p class="text-blue-200/90 text-xs sm:text-sm font-medium tracking-wide">您的專屬大會編號</p>
+                    <div id="cardAttendeeId" class="text-8xl sm:text-9xl font-black text-white tracking-wider font-mono drop-shadow-xl leading-none py-2">
                         001
                     </div>
                 </div>
 
-                <!-- 3.3 提醒文字 -->
-                <div class="p-4 bg-amber-400/15 border border-amber-300/30 rounded-2xl text-amber-200 text-sm font-semibold flex items-center justify-center space-x-2.5 backdrop-blur-sm">
-                    <i class="fa-solid fa-circle-exclamation text-amber-300 text-lg flex-shrink-0"></i>
-                    <span class="leading-snug">請向報到櫃台出示此畫面領取大會資料袋</span>
+                <!-- 5. 白色提醒框：⚠️ 請向櫃台出示此畫面領取大會資料袋 -->
+                <div class="p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg">
+                    <span class="text-base">⚠️</span>
+                    <span>請向櫃台出示此畫面領取大會資料袋</span>
                 </div>
 
-                <!-- 8.7 兌換資料袋按鈕 (無禮物圖案) -->
+                <!-- 6. 主功能按鈕 (兌換資料袋) -->
                 <div class="pt-2">
-                    <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-4 px-4 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-900/30 transition text-lg disabled:bg-slate-600/60 disabled:text-slate-300 disabled:cursor-not-allowed disabled:shadow-none">
+                    <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-3.5 px-4 bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.99] text-white font-bold rounded-2xl shadow-lg transition text-base disabled:bg-slate-600/70 disabled:text-slate-300 disabled:cursor-not-allowed">
                         <span id="redeemBagBtnText">兌換資料袋</span>
                     </button>
-                    <p id="bagCollectedInfo" class="text-xs text-blue-200/90 mt-2.5 font-medium"></p>
+                    <p id="bagCollectedInfo" class="text-xs text-blue-200 mt-2 font-medium"></p>
                 </div>
             </div>
         </div>
@@ -516,13 +513,15 @@
 
     <script>
         // =========================================================================
-        // 📢 請在將此檔案上傳至 GitHub Pages 前，將下方網址替換為您的 Apps Script 發布網址
+        // 1. 全域設定 (發布到 GitHub Pages 前，請在此貼上您的 Apps Script Web App URL)
         // =========================================================================
         const CONFIG = {
             GAS_URL: 'https://script.google.com/macros/s/AKfycbz_y6Uurpzqmo1EGz_4t66O66M22_orgxEW9BwrrwD0PjM23C2YzBZj9GGnHF-fnfPxjg/exec'
         };
 
-        // 全域狀態管理 (100% 雲端資料庫導向，無 LocalStorage 依賴)
+        // =========================================================================
+        // 2. 系統狀態管理 (完全不儲存於 LocalStorage)
+        // =========================================================================
         let state = {
             attendees: [],
             deviceCards: [],
@@ -533,210 +532,196 @@
         };
 
         let isAdminLoggedIn = false;
-        let duplicateAttendeeCache = null;
 
-        // 鎖定右鍵與 F12 檢視
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-            if (e.key === 'F12' || 
-               (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) || 
-               (e.ctrlKey && (e.key === 'U' || e.key === 'u'))) {
-                e.preventDefault();
-            }
-        });
-
+        // 頁面載入完成時，自動初始化並嘗試與 Google 雲端連線
         window.addEventListener('DOMContentLoaded', () => {
             checkTimeWindow();
-            updateDeviceCount();
-            
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
                 syncFromGas();
             } else {
-                showToast('提示：請先至後台設定 Apps Script Web App 網址以啟用雲端同步！', 'warning');
+                console.log('請於 CONFIG.GAS_URL 或後台輸入 Apps Script Web App 網址以連線試算表。');
             }
         });
 
-        function openCardModal() {
-            if (state.deviceCards.length > 0) {
-                document.getElementById('cardModal').classList.remove('hidden');
-                renderModalCardTabs();
-                renderActiveCardContent();
+        // 輔助函式：將編號格式化為 3 位數 (例如 1 -> 001)
+        function formatDisplayId(id) {
+            if (!id) return '001';
+            const num = parseInt(id, 10);
+            if (!isNaN(num)) {
+                return String(num).padStart(3, '0');
             }
+            return String(id);
+        }
+
+        // =========================================================================
+        // 3. 處理前台線上報到送出 (秒開 Modal，背景同步雲端)
+        // =========================================================================
+        function handleCheckInSubmit(e) {
+            e.preventDefault();
+
+            if (!checkTimeWindow()) {
+                showToast('目前非開放報到時段！', 'warning');
+                return;
+            }
+
+            const nameInput = document.getElementById('attendeeName').value.trim();
+            if (!nameInput) {
+                showToast('請輸入姓名', 'warning');
+                return;
+            }
+
+            const lunchOption = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
+            const cmeBoxes = document.querySelectorAll('input[name="cmeOption"]:checked');
+            const cmeOptions = Array.from(cmeBoxes).map(cb => cb.value);
+
+            // 檢查全體名單中該人員是否已經完成報到
+            const existingAttendee = state.attendees.find(a => a.name === nameInput);
+            if (existingAttendee && existingAttendee.isCheckedIn) {
+                // 顯示重複報到提醒橫幅
+                const dupBanner = document.getElementById('duplicateNoticeBanner');
+                document.getElementById('duplicateNameText').textContent = `${existingAttendee.name} 已辦理過報到`;
+                document.getElementById('duplicateTimeText').textContent = `已於 ${existingAttendee.checkInTime || '先前時段'} 完成報到`;
+                dupBanner.classList.remove('hidden');
+
+                // 若本裝置中尚未包含此卡片，自動寫入裝置卡片清單
+                let cardIndex = state.deviceCards.findIndex(c => c.name === existingAttendee.name);
+                if (cardIndex === -1) {
+                    state.deviceCards.push({ ...existingAttendee });
+                    cardIndex = state.deviceCards.length - 1;
+                }
+                state.currentActiveCardIndex = cardIndex;
+                openCardModal();
+                updateDeviceCount();
+                showToast('此與會人員已報到過！已為您再次開啟報到卡片。', 'info');
+                return;
+            }
+
+            // 新報到人員邏輯
+            document.getElementById('duplicateNoticeBanner').classList.add('hidden');
+
+            const checkInTimeStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+            let assignedId = existingAttendee ? existingAttendee.id : String(state.attendees.length + 1).padStart(3, '0');
+
+            const cardData = {
+                id: assignedId,
+                name: nameInput,
+                lunch: lunchOption,
+                cme: cmeOptions,
+                isCheckedIn: true,
+                checkInTime: checkInTimeStr,
+                bagCollected: false,
+                bagCollectorName: ''
+            };
+
+            // 更新記憶體狀態
+            if (existingAttendee) {
+                Object.assign(existingAttendee, cardData);
+            } else {
+                state.attendees.push(cardData);
+            }
+
+            // 加入本裝置卡片清單
+            const existingDeviceCardIdx = state.deviceCards.findIndex(c => c.name === cardData.name);
+            if (existingDeviceCardIdx !== -1) {
+                state.deviceCards[existingDeviceCardIdx] = cardData;
+                state.currentActiveCardIndex = existingDeviceCardIdx;
+            } else {
+                state.deviceCards.push(cardData);
+                state.currentActiveCardIndex = state.deviceCards.length - 1;
+            }
+
+            // 即時反應介面
+            openCardModal();
+            updateDeviceCount();
+            if (isAdminLoggedIn) renderAdminTable();
+
+            // 背景非同步同步至雲端 Apps Script (完全不阻塞 UI)
+            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
+                syncCheckInToGas(cardData);
+            }
+
+            showToast('報到成功！憑證卡片已產生。', 'success');
+        }
+
+        function reopenDuplicateCard() {
+            if (state.deviceCards.length > 0) {
+                openCardModal();
+            }
+        }
+
+        // =========================================================================
+        // 4. 報到卡片 Modal 邏輯與渲染
+        // =========================================================================
+        function openCardModal() {
+            if (state.deviceCards.length === 0) return;
+            renderCardTabs();
+            renderActiveCardContent();
+            document.getElementById('cardModal').classList.remove('hidden');
         }
 
         function closeCardModal() {
             document.getElementById('cardModal').classList.add('hidden');
         }
 
-        function renderModalCardTabs() {
+        function renderCardTabs() {
             const tabsContainer = document.getElementById('modalCardTabs');
+            tabsContainer.innerHTML = '';
+
             if (state.deviceCards.length <= 1) {
                 tabsContainer.classList.add('hidden');
                 return;
             }
-            
+
             tabsContainer.classList.remove('hidden');
-            tabsContainer.innerHTML = '';
-            
-            state.deviceCards.forEach((card, index) => {
+            state.deviceCards.forEach((card, idx) => {
                 const btn = document.createElement('button');
-                btn.className = `px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                    index === state.currentActiveCardIndex 
-                    ? 'bg-amber-400 text-slate-900 shadow-sm' 
-                    : 'bg-white/10 text-white hover:bg-white/20'
+                btn.type = 'button';
+                btn.className = `px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition ${
+                    idx === state.currentActiveCardIndex 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-white/10 text-blue-200 hover:bg-white/20'
                 }`;
                 btn.textContent = `${card.name} (${formatDisplayId(card.id)})`;
                 btn.onclick = () => {
-                    state.currentActiveCardIndex = index;
-                    renderModalCardTabs();
+                    state.currentActiveCardIndex = idx;
+                    renderCardTabs();
                     renderActiveCardContent();
                 };
                 tabsContainer.appendChild(btn);
             });
         }
 
-        // 8.4 格式化編號：最多 3 碼 (001, 002, 003)
-        function formatDisplayId(rawId) {
-            if (!rawId) return '001';
-            const digitsOnly = String(rawId).replace(/[^0-9]/g, '');
-            if (!digitsOnly) return '001';
-            return digitsOnly.slice(-3).padStart(3, '0');
-        }
-
         function renderActiveCardContent() {
-            if (state.deviceCards.length === 0) return;
-            const card = state.deviceCards[state.currentActiveCardIndex];
-            if (!card) return;
+            const currentCard = state.deviceCards[state.currentActiveCardIndex];
+            if (!currentCard) return;
 
-            document.getElementById('cardAttendeeName').textContent = card.name;
-            document.getElementById('cardAttendeeId').textContent = formatDisplayId(card.id);
+            document.getElementById('cardAttendeeName').textContent = currentCard.name;
+            document.getElementById('cardAttendeeId').textContent = formatDisplayId(currentCard.id);
 
             const redeemBtn = document.getElementById('redeemBagBtn');
             const redeemBtnText = document.getElementById('redeemBagBtnText');
             const infoText = document.getElementById('bagCollectedInfo');
 
-            if (card.bagCollected) {
+            if (currentCard.bagCollected) {
                 redeemBtn.disabled = true;
-                redeemBtnText.textContent = '已完成兌換資料袋';
-                infoText.textContent = `兌換領取人：${card.bagCollectorName || card.name}`;
-                infoText.classList.remove('hidden');
+                redeemBtnText.textContent = '已完成資料袋兌換';
+                infoText.textContent = `領取紀錄：${currentCard.bagCollectorName || currentCard.name}`;
             } else {
                 redeemBtn.disabled = false;
                 redeemBtnText.textContent = '兌換資料袋';
-                infoText.classList.add('hidden');
+                infoText.textContent = '';
             }
         }
 
-        // 7. 重新顯示重複報到卡片
-        function reopenDuplicateCard() {
-            if (duplicateAttendeeCache) {
-                const idx = state.deviceCards.findIndex(c => c.name === duplicateAttendeeCache.name);
-                if (idx >= 0) {
-                    state.currentActiveCardIndex = idx;
-                } else {
-                    state.deviceCards.push(duplicateAttendeeCache);
-                    state.currentActiveCardIndex = state.deviceCards.length - 1;
-                    updateDeviceCount();
-                }
-                openCardModal();
-            }
-        }
-
-        async function handleCheckInSubmit(e) {
-            e.preventDefault();
-
-            if (!checkTimeWindow()) {
-                showToast('目前非報到開放時段，無法辦理線上報到！', 'error');
-                return;
-            }
-
-            const nameInput = document.getElementById('attendeeName').value.trim();
-            if (!nameInput) return;
-
-            const submitBtn = document.getElementById('submitCheckInBtn');
-            submitBtn.disabled = true;
-
-            const selectedLunch = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
-            const selectedCme = Array.from(document.querySelectorAll('input[name="cmeOption"]:checked')).map(cb => cb.value);
-            const nowTime = new Date().toLocaleString('zh-TW', { hour12: false });
-
-            let attendee = state.attendees.find(a => a.name.trim() === nameInput);
-
-            // 7. 重複報到處理
-            if (attendee && attendee.isCheckedIn) {
-                duplicateAttendeeCache = attendee;
-                document.getElementById('duplicateNameText').textContent = `${attendee.name} 已於此前完成報到`;
-                document.getElementById('duplicateTimeText').textContent = `已於 ${attendee.checkInTime || '系統登記時間'} 報到`;
-                document.getElementById('duplicateNoticeBanner').classList.remove('hidden');
-                
-                showToast(`提示：${nameInput} 已於此前完成報到！`, 'warning');
-                submitBtn.disabled = false;
-                
-                const existingIdx = state.deviceCards.findIndex(c => c.name === attendee.name);
-                if (existingIdx >= 0) {
-                    state.currentActiveCardIndex = existingIdx;
-                } else {
-                    state.deviceCards.push(attendee);
-                    state.currentActiveCardIndex = state.deviceCards.length - 1;
-                    updateDeviceCount();
-                }
-                openCardModal();
-                return;
-            } else {
-                document.getElementById('duplicateNoticeBanner').classList.add('hidden');
-            }
-
-            if (!attendee) {
-                const nextNum = state.attendees.length + 1;
-                const newId = String(nextNum).padStart(3, '0');
-                attendee = {
-                    id: newId,
-                    name: nameInput,
-                    isCheckedIn: true,
-                    checkInTime: nowTime,
-                    lunch: selectedLunch,
-                    cme: selectedCme,
-                    bagCollected: false,
-                    bagCollectorName: ''
-                };
-                state.attendees.push(attendee);
-                showToast(`已建立報到紀錄 (${formatDisplayId(newId)})`, 'success');
-            } else {
-                attendee.isCheckedIn = true;
-                attendee.checkInTime = nowTime;
-                attendee.lunch = selectedLunch;
-                attendee.cme = selectedCme;
-                showToast(`報到成功！歡迎與會。`, 'success');
-            }
-
-            const existingDeviceCardIndex = state.deviceCards.findIndex(c => c.name === attendee.name);
-            if (existingDeviceCardIndex >= 0) {
-                state.deviceCards[existingDeviceCardIndex] = attendee;
-                state.currentActiveCardIndex = existingDeviceCardIndex;
-            } else {
-                state.deviceCards.push(attendee);
-                state.currentActiveCardIndex = state.deviceCards.length - 1;
-            }
-
-            updateDeviceCount();
-
-            // 背景非同步寫入雲端
-            if (state.gasUrl) {
-                syncCheckInToGas(attendee);
-            }
-
-            submitBtn.disabled = false;
-            document.getElementById('attendeeName').value = '';
-            openCardModal();
-        }
-
-        // 9. 10. 僅在該裝置有複數人員 (length > 1) 時顯示清單，並依領取狀態套用翡翠綠與琥珀黃底色
+        // =========================================================================
+        // 5. 本裝置已報到人員列表 (只要有 1 人即顯示)
+        // =========================================================================
         function updateDeviceCount() {
             const container = document.getElementById('deviceCardsContainer');
             const list = document.getElementById('deviceCardsList');
             const countSpan = document.getElementById('deviceCardCount');
 
-            if (state.deviceCards.length <= 1) {
+            if (state.deviceCards.length === 0) {
                 container.classList.add('hidden');
                 return;
             }
@@ -751,7 +736,7 @@
                 cardDiv.className = `p-4 rounded-xl border transition flex justify-between items-center cursor-pointer shadow-sm ${
                     isCollected 
                     ? 'bg-emerald-50 border-emerald-300 text-emerald-950 hover:bg-emerald-100' 
-                    : 'bg-amber-50/80 border-amber-300 text-amber-950 hover:bg-amber-100'
+                    : 'bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100'
                 }`;
                 cardDiv.onclick = () => {
                     state.currentActiveCardIndex = idx;
@@ -764,7 +749,7 @@
                         </div>
                         <div>
                             <p class="font-bold text-sm">${card.name}</p>
-                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold ${isCollected ? 'bg-emerald-200 text-emerald-900' : 'bg-amber-200 text-amber-900'}">
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold ${isCollected ? 'bg-emerald-200 text-emerald-900' : 'bg-blue-200 text-blue-900'}">
                                 ${isCollected ? '已領資料袋' : '未領資料袋'}
                             </span>
                         </div>
@@ -782,7 +767,6 @@
             const currentCard = state.deviceCards[state.currentActiveCardIndex];
             const input = document.getElementById('collectorNameInput');
 
-            // 3.6 如果同一裝置有多張卡片，預代第一張卡片的與會人員姓名
             if (state.deviceCards.length > 1 && state.currentActiveCardIndex > 0) {
                 input.value = state.deviceCards[0].name;
             } else {
@@ -820,11 +804,14 @@
 
             showToast('已完成資料袋兌換紀錄！', 'success');
 
-            if (state.gasUrl) {
+            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
                 syncBagToGas(currentCard);
             }
         }
 
+        // =========================================================================
+        // 6. 後台管理系統邏輯 (登入、時段、雲端同步與勾稽)
+        // =========================================================================
         function openAdminLoginModal() {
             if (isAdminLoggedIn) {
                 document.getElementById('adminConsoleModal').classList.remove('hidden');
@@ -921,7 +908,7 @@
                         </span>
                     </td>
                     <td class="p-3 text-slate-500">${att.checkInTime || '-'}</td>
-                    <td class="p-3">${att.lunch || '葷食'}</td>
+                    <td class="p-3">${att.lunch || '-'}</td>
                     <td class="p-3">${(att.cme && att.cme.length) ? att.cme.join(', ') : '無'}</td>
                     <td class="p-3">
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${att.bagCollected ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}">
@@ -945,14 +932,14 @@
             });
         }
 
+        // 取消報到時，徹底還原為最原始乾淨狀態 (時間、餐點、積分、資料袋皆清空)
         function toggleAttendeeCheckIn(id) {
             const att = state.attendees.find(a => a.id === id);
             if (att) {
                 att.isCheckedIn = !att.isCheckedIn;
                 if (att.isCheckedIn) {
-                    att.checkInTime = new Date().toLocaleString('zh-TW', { hour12: false });
+                    att.checkInTime = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
                 } else {
-                    // 取消報到時，完全恢復最原始狀態（清空時間、餐點、學分、資料袋紀錄）
                     att.checkInTime = '';
                     att.lunch = '';
                     att.cme = [];
@@ -961,7 +948,7 @@
                 }
                 renderAdminTable();
                 showToast(`已更新 ${att.name} 報到狀態`, 'info');
-                if (state.gasUrl) syncCheckInToGas(att);
+                if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncCheckInToGas(att);
             }
         }
 
@@ -973,7 +960,7 @@
                 else if (!att.bagCollectorName) att.bagCollectorName = att.name;
                 renderAdminTable();
                 showToast(`已更新 ${att.name} 資料袋狀態`, 'info');
-                if (state.gasUrl) syncBagToGas(att);
+                if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncBagToGas(att);
             }
         }
 
@@ -981,10 +968,7 @@
             state.attendees = state.attendees.filter(a => a.id !== id);
             renderAdminTable();
             showToast('已刪除該名與會人員資料', 'info');
-
-            if (state.gasUrl) {
-                syncDeleteToGas(id);
-            }
+            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncDeleteToGas(id);
         }
 
         function openAddAttendeeModal() {
@@ -1013,7 +997,7 @@
             closeAddAttendeeModal();
             showToast('新增與會人員成功！', 'success');
 
-            if (state.gasUrl) {
+            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
                 syncAddAttendeeToGas(newAttendee);
             }
         }
@@ -1027,13 +1011,16 @@
             samples.forEach(s => {
                 if (!state.attendees.some(a => a.id === s.id)) {
                     state.attendees.push(s);
-                    if (state.gasUrl) syncAddAttendeeToGas(s);
+                    if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncAddAttendeeToGas(s);
                 }
             });
             renderAdminTable();
             showToast('已匯入測試範例名單並同步至雲端！', 'success');
         }
 
+        // =========================================================================
+        // 7. 雲端 Apps Script API 通訊模組
+        // =========================================================================
         function postToGas(payload) {
             if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) return;
             fetch(state.gasUrl, {
@@ -1062,7 +1049,7 @@
 
         async function syncFromGas() {
             if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
-                showToast('提示：請點擊後台設定 Apps Script Web App 網址以啟用雲端同步！', 'warning');
+                showToast('提示：請在 CONFIG.GAS_URL 填寫 Web App 網址以連線雲端！', 'warning');
                 return;
             }
             const badge = document.getElementById('syncStatusBadge');
