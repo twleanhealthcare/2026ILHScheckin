@@ -546,6 +546,26 @@
             return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
         }
 
+        // 統一將任何時間格式轉換解析為 YYYY/MM/DD HH:mm
+        function formatCheckInTimeDisplay(timeStr) {
+            if (!timeStr) return '--';
+            let cleanStr = String(timeStr).trim();
+            let d = new Date(cleanStr);
+            if (isNaN(d.getTime())) {
+                cleanStr = cleanStr.replace(/-/g, '/');
+                d = new Date(cleanStr);
+            }
+            if (!isNaN(d.getTime())) {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const hh = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+            }
+            return cleanStr;
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             loadDeviceCardIds();
             if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
@@ -624,7 +644,7 @@
             if (attendee && attendee.isCheckedIn) {
                 // 已報到的重複提示處理
                 document.getElementById('duplicateNameText').textContent = `${attendee.name} 先生/女士已完成報到`;
-                document.getElementById('duplicateTimeText').textContent = `報到時間：${attendee.checkInTime || '先前'}`;
+                document.getElementById('duplicateTimeText').textContent = `報到時間：${formatCheckInTimeDisplay(attendee.checkInTime)}`;
 
                 const duplicateBagEl = document.getElementById('duplicateBagStatusText');
                 if (attendee.bagCollected) {
@@ -972,7 +992,7 @@
                             ${att.isCheckedIn ? '已報到' : '未報到'}
                         </span>
                     </td>
-                    <td class="p-3 text-slate-500 font-mono text-[11px]">${att.checkInTime || '-'}</td>
+                    <td class="p-3 text-slate-500 font-mono text-[11px]">${formatCheckInTimeDisplay(att.checkInTime)}</td>
                     <td class="p-3">${att.lunch || '-'}</td>
                     <td class="p-3">${(att.cme && att.cme.length) ? att.cme.join(', ') : '無'}</td>
                     <td class="p-3">
@@ -1172,7 +1192,7 @@
             let csv = '\uFEFF編號,姓名,報到狀態,報到時間,午餐需求,教育積分,資料袋狀態,領取或代領人姓名\n';
             state.attendees.forEach(a => {
                 const cmeStr = (a.cme || []).join('; ');
-                csv += `"${formatDisplayId(a.id)}","${a.name}","${a.isCheckedIn ? '已報到' : '未報到'}","${a.checkInTime || ''}","${a.lunch || ''}","${cmeStr}","${a.bagCollected ? '已領取' : '未領取'}","${a.bagCollectorName || ''}"\n`;
+                csv += `"${formatDisplayId(a.id)}","${a.name}","${a.isCheckedIn ? '已報到' : '未報到'}","${formatCheckInTimeDisplay(a.checkInTime)}","${a.lunch || ''}","${cmeStr}","${a.bagCollected ? '已領取' : '未領取'}","${a.bagCollectorName || ''}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
