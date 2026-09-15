@@ -221,58 +221,59 @@
     </main>
 
     <!-- 8. 報到卡片 Modal 視窗 -->
-    <div id="cardModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4">
-        <!-- 8.1 背景顏色改為 #0F348D -->
-        <div class="relative w-full max-w-md bg-[#0F348D] text-white rounded-3xl shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-8">
+    <div id="cardModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4 sm:p-6">
+        <!-- 8.1 背景顏色改為 #0F348D 質感重構 -->
+        <div class="relative w-full max-w-md bg-[#0F348D] text-white rounded-3xl shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto">
             
             <!-- 8.8 右上角 X 關閉按鈕 -->
-            <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xl transition">
+            <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white text-2xl transition border border-white/10">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
             <!-- 多人報到卡片分頁頁籤 -->
-            <div id="modalCardTabs" class="bg-blue-950/60 px-4 py-3 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-14">
+            <div id="modalCardTabs" class="bg-blue-950/70 px-4 py-3 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-16">
                 <!-- 動態注入分頁 -->
             </div>
 
             <!-- 報到卡片內容 -->
             <div class="p-6 sm:p-8 text-center space-y-6">
                 <!-- 8.2 文字字體大小 30px -->
-                <div class="text-[30px] font-bold tracking-tight text-blue-100 leading-snug">
+                <div class="text-[30px] font-black tracking-tight text-blue-100 leading-tight drop-shadow-sm">
                     2026精實醫療國際高峰會
                 </div>
 
                 <!-- 8.2 報到卡片已生效 (30px) -->
-                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[30px] font-bold leading-tight">
-                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+                <div class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 text-[30px] font-bold leading-none shadow-inner">
+                    <span class="w-4 h-4 rounded-full bg-emerald-400 mr-3 animate-pulse"></span>
                     <span>報到卡片已生效</span>
                 </div>
 
                 <!-- 8.2 與會人員姓名 (30px) -->
-                <div class="pt-2">
-                    <p class="text-[30px] text-blue-200 font-bold leading-tight mb-1">與會人員姓名</p>
-                    <h3 id="cardAttendeeName" class="text-[30px] font-black text-white tracking-wide">--</h3>
+                <div class="pt-2 border-t border-blue-400/20">
+                    <p class="text-[30px] text-blue-200/90 font-bold leading-tight mb-2">與會人員姓名</p>
+                    <h3 id="cardAttendeeName" class="text-[34px] font-black text-white tracking-wide drop-shadow">--</h3>
                 </div>
 
-                <!-- 8.4 編號：大字體，最多3碼 (001, 002, 003) -->
-                <div class="bg-white/10 rounded-2xl p-4 border border-white/20 my-2">
-                    <div id="cardAttendeeId" class="text-7xl sm:text-8xl font-black text-amber-300 tracking-wider my-1 font-mono">
+                <!-- 8.4 編號：滿版超大字體 (50px+), 醒目金黃 -->
+                <div class="bg-gradient-to-b from-white/15 to-white/5 rounded-2xl p-5 border border-white/20 shadow-xl my-2">
+                    <p class="text-xs text-blue-200/70 uppercase tracking-widest font-semibold mb-1">ATTENDEE NO.</p>
+                    <div id="cardAttendeeId" class="text-7xl sm:text-8xl font-black text-amber-300 tracking-wider font-mono drop-shadow-lg py-1">
                         001
                     </div>
                 </div>
 
                 <!-- 3.3 提醒文字 -->
-                <div class="p-3.5 bg-amber-400/20 border border-amber-300/40 rounded-xl text-amber-200 text-xs sm:text-sm font-semibold flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-circle-exclamation text-amber-300 text-base"></i>
-                    <span>請向報到櫃台出示此畫面領取大會資料袋</span>
+                <div class="p-4 bg-amber-400/15 border border-amber-300/30 rounded-2xl text-amber-200 text-sm font-semibold flex items-center justify-center space-x-2.5 backdrop-blur-sm">
+                    <i class="fa-solid fa-circle-exclamation text-amber-300 text-lg flex-shrink-0"></i>
+                    <span class="leading-snug">請向報到櫃台出示此畫面領取大會資料袋</span>
                 </div>
 
                 <!-- 8.7 兌換資料袋按鈕 (無禮物圖案) -->
                 <div class="pt-2">
-                    <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-4 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg transition text-base disabled:bg-slate-500/50 disabled:text-slate-300 disabled:cursor-not-allowed disabled:shadow-none">
+                    <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-4 px-4 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.99] text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-900/30 transition text-lg disabled:bg-slate-600/60 disabled:text-slate-300 disabled:cursor-not-allowed disabled:shadow-none">
                         <span id="redeemBagBtnText">兌換資料袋</span>
                     </button>
-                    <p id="bagCollectedInfo" class="text-xs text-blue-200 mt-2 hidden"></p>
+                    <p id="bagCollectedInfo" class="text-xs text-blue-200/90 mt-2.5 font-medium"></p>
                 </div>
             </div>
         </div>
@@ -518,7 +519,7 @@
         // 📢 請在將此檔案上傳至 GitHub Pages 前，將下方網址替換為您的 Apps Script 發布網址
         // =========================================================================
         const CONFIG = {
-            GAS_URL: 'https://script.google.com/macros/s/AKfycbzlX7LL2eDOsq_44qS-KdJKPuxzV5OkFCYZag7PyYMIbdqdrO_-KCNGETk8Fs3JUOwf-Q/exec'
+            GAS_URL: 'https://script.google.com/macros/s/AKfycbz_y6Uurpzqmo1EGz_4t66O66M22_orgxEW9BwrrwD0PjM23C2YzBZj9GGnHF-fnfPxjg/exec'
         };
 
         // 全域狀態管理 (100% 雲端資料庫導向，無 LocalStorage 依賴)
@@ -948,7 +949,16 @@
             const att = state.attendees.find(a => a.id === id);
             if (att) {
                 att.isCheckedIn = !att.isCheckedIn;
-                att.checkInTime = att.isCheckedIn ? new Date().toLocaleString('zh-TW', { hour12: false }) : '';
+                if (att.isCheckedIn) {
+                    att.checkInTime = new Date().toLocaleString('zh-TW', { hour12: false });
+                } else {
+                    // 取消報到時，完全恢復最原始狀態（清空時間、餐點、學分、資料袋紀錄）
+                    att.checkInTime = '';
+                    att.lunch = '';
+                    att.cme = [];
+                    att.bagCollected = false;
+                    att.bagCollectorName = '';
+                }
                 renderAdminTable();
                 showToast(`已更新 ${att.name} 報到狀態`, 'info');
                 if (state.gasUrl) syncCheckInToGas(att);
