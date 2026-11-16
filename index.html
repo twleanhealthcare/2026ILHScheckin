@@ -18,8 +18,6 @@
                     colors: {
                         primary: '#0F348D',
                         'primary-dark': '#0a2360',
-                        'primary-light': '#1d4ed8',
-                        accent: '#10B981',
                     },
                     fontFamily: {
                         sans: ['Inter', 'Microsoft JhengHei', 'sans-serif'],
@@ -42,7 +40,6 @@
             background-color: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(5px);
         }
-        /* Custom scrollbar styling */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -58,7 +55,6 @@
     <!-- 頁首 Header -->
     <header class="bg-primary text-white shadow-md sticky top-0 z-30">
         <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-            <!-- 1. 地球圖案與大會名稱 -->
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center border border-white/20 text-white text-xl">
                     <i class="fa-solid fa-earth-americas"></i>
@@ -69,7 +65,6 @@
                 </div>
             </div>
             
-            <!-- 2. 後台管理按鈕 (僅顯示齒輪圖案) -->
             <div class="flex items-center space-x-2">
                 <button id="navAdminBtn" onclick="openAdminLoginModal()" title="工作人員登入" 
                     class="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 transition flex items-center justify-center text-white focus:outline-none">
@@ -93,11 +88,20 @@
             <i class="fa-solid fa-clock text-amber-600 text-lg mt-0.5"></i>
             <div>
                 <h4 class="font-bold text-sm">報到開放時間提示</h4>
-                <p id="timeNoticeText" class="text-xs sm:text-sm mt-0.5">目前非大會設定之開放報到時間，若有特殊事宜請至大會服務櫃檯洽詢。</p>
+                <p class="text-xs sm:text-sm mt-0.5">目前非大會設定之開放報到時間，若有特殊事宜請至大會服務櫃檯洽詢。</p>
             </div>
         </div>
 
-        <!-- 重複報到提醒窗格 (含資料袋領取狀態) -->
+        <!-- 查無報名資料提醒橫幅 -->
+        <div id="notFoundNoticeBanner" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-start space-x-3 shadow-sm">
+            <i class="fa-solid fa-circle-xmark text-red-600 text-lg mt-0.5"></i>
+            <div>
+                <h4 class="font-bold text-sm">查無報名名單紀錄</h4>
+                <p id="notFoundNoticeText" class="text-xs sm:text-sm mt-0.5">系統中尚無此姓名之報名資料，請確認輸入是否正確，或至大會服務櫃檯洽詢現場補登。</p>
+            </div>
+        </div>
+
+        <!-- 重複報到提醒窗格 -->
         <div id="duplicateNoticeBanner" class="hidden mb-6 p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-start space-x-3 text-amber-900">
                 <i class="fa-solid fa-circle-exclamation text-amber-600 text-2xl flex-shrink-0 mt-0.5"></i>
@@ -114,7 +118,7 @@
         </div>
 
         <div class="bg-white rounded-2xl card-shadow border border-slate-100 p-6 sm:p-10">
-            <!-- 連線狀態標籤 (英文 Connected) -->
+            <!-- 連線狀態標籤 -->
             <div class="flex justify-between items-center mb-6">
                 <div class="text-xs text-slate-400 font-semibold tracking-wider">2026 LEAN SUMMIT</div>
                 <div>
@@ -124,7 +128,6 @@
                 </div>
             </div>
 
-            <!-- 與會者報到標題 -->
             <h2 class="text-3xl sm:text-4xl font-extrabold text-primary text-center mb-8 tracking-wide">與會者報到</h2>
 
             <form id="checkInForm" onsubmit="handleCheckInSubmit(event)" class="space-y-6">
@@ -179,22 +182,26 @@
                     </label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
-                            <input type="checkbox" name="cmeOption" value="醫師 (品質 2.4)" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
-                            <span class="ml-2.5 text-sm text-slate-700 font-medium">醫師 (品質 2.4)</span>
+                            <input type="checkbox" name="cmeOption" value="醫師(品質2.4)" onchange="handleCmeOptionChange(this)" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
+                            <span class="ml-2.5 text-sm text-slate-700 font-medium">醫師(品質2.4)</span>
                         </label>
                         <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
-                            <input type="checkbox" name="cmeOption" value="護理師 (品質 2.4)" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
-                            <span class="ml-2.5 text-sm text-slate-700 font-medium">護理師 (品質 2.4)</span>
-                        </label>
-                        <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
-                            <input type="checkbox" name="cmeOption" value="公務人員" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
+                            <input type="checkbox" name="cmeOption" value="公務人員" onchange="handleCmeOptionChange(this)" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
                             <span class="ml-2.5 text-sm text-slate-700 font-medium">公務人員</span>
                         </label>
                         <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
-                            <input type="checkbox" name="cmeOption" value="台灣醫療品質協會" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
+                            <input type="checkbox" name="cmeOption" value="台灣醫療品質協會" onchange="handleCmeOptionChange(this)" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
                             <span class="ml-2.5 text-sm text-slate-700 font-medium">台灣醫療品質協會</span>
                         </label>
+                        <label class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+                            <input type="checkbox" name="cmeOption" value="不需要積分" onchange="handleCmeOptionChange(this)" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary">
+                            <span class="ml-2.5 text-sm text-slate-700 font-medium">不需要積分</span>
+                        </label>
                     </div>
+                    <p class="mt-2 text-xs text-slate-500 flex items-start space-x-1.5">
+                        <i class="fa-solid fa-circle-info text-slate-400 mt-0.5"></i>
+                        <span>因高峰會議程近期有變動未及於時限內完成申請，故本次無護理人員繼續教育積分，造成不便，敬請見諒。</span>
+                    </p>
                 </div>
 
                 <!-- 送出按鈕 -->
@@ -207,7 +214,7 @@
             </form>
         </div>
 
-        <!-- 本裝置已報到人員列表 (單人時僅顯示卡片，隱藏標題文字；雙人以上才顯示標題與計數) -->
+        <!-- 本裝置已報到人員列表 -->
         <div id="deviceCardsContainer" class="mt-8 hidden">
             <div id="deviceCardsHeader" class="flex items-center justify-between mb-3 px-1 hidden">
                 <h3 class="text-sm font-bold text-slate-700 flex items-center">
@@ -216,44 +223,33 @@
                 </h3>
                 <span class="text-xs text-slate-500">點擊圖卡可切換顯示報到卡片</span>
             </div>
-            <div id="deviceCardsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <!-- 動態注入同裝置已報到人員卡片 -->
-            </div>
+            <div id="deviceCardsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         </div>
     </main>
 
-    <!-- 報到卡片 Modal 視窗 (與範例圖片 100% 一模一樣之質感藍色卡片) -->
+    <!-- 報到卡片 Modal 視窗 -->
     <div id="cardModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4 sm:p-6">
         <div class="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center">
             
-            <!-- 右上角 X 關閉按鈕 -->
             <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white text-xl transition border border-white/10">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <!-- 多人報到卡片分頁頁籤 (同裝置 2 人以上時顯示) -->
-            <div id="modalCardTabs" class="bg-blue-950/70 px-4 py-2 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-12 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6">
-                <!-- 動態注入分頁 -->
-            </div>
+            <div id="modalCardTabs" class="bg-blue-950/70 px-4 py-2 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-12 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6"></div>
 
-            <!-- 報到卡片內容 -->
             <div class="space-y-4">
-                <!-- 1. 標題：2026 精實國際醫療高峰會 (30px 視覺) -->
                 <div class="text-2xl sm:text-[30px] font-bold tracking-wide text-white drop-shadow-sm leading-tight">
                     2026 精實國際醫療高峰會
                 </div>
 
-                <!-- 2. 綠色報到憑證已生效膠囊標籤 -->
                 <div class="inline-flex items-center px-5 py-1.5 rounded-full bg-[#10b981] text-white text-sm font-bold shadow-md">
                     <span>報到憑證已生效</span>
                 </div>
 
-                <!-- 3. 與會人員姓名 -->
                 <div class="pt-1">
                     <h3 id="cardAttendeeName" class="text-3xl sm:text-[30px] font-black text-white tracking-wide">--</h3>
                 </div>
 
-                <!-- 4. 您的專屬大會編號 + 超大 3 碼號碼 (如 001, 002) -->
                 <div class="py-2">
                     <p class="text-blue-200/90 text-xs sm:text-sm font-medium tracking-wide">您的專屬大會編號</p>
                     <div id="cardAttendeeId" class="text-8xl sm:text-9xl font-black text-white tracking-wider font-mono drop-shadow-xl leading-none py-2">
@@ -261,13 +257,11 @@
                     </div>
                 </div>
 
-                <!-- 5. 白色提醒框：⚠️ 請向櫃台出示此畫面領取大會資料袋 -->
                 <div class="p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg">
                     <span class="text-base">⚠️</span>
                     <span>請向櫃台出示此畫面領取大會資料袋</span>
                 </div>
 
-                <!-- 6. 主功能按鈕 (兌換資料袋) -->
                 <div class="pt-2">
                     <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-3.5 px-4 bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.99] text-white font-bold rounded-2xl shadow-lg transition text-base disabled:bg-slate-600/70 disabled:text-slate-300 disabled:cursor-not-allowed">
                         <span id="redeemBagBtnText">兌換資料袋</span>
@@ -334,7 +328,7 @@
                         class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm">
                 </div>
                 
-                <button type="submit" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm shadow-md transition">
+                <button type="submit" id="adminLoginSubmitBtn" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm shadow-md transition">
                     登入後台系統
                 </button>
             </form>
@@ -344,7 +338,6 @@
     <!-- 後台管理主控台 Modal -->
     <div id="adminConsoleModal" class="fixed inset-0 z-40 hidden overflow-y-auto bg-slate-100">
         <div class="min-h-screen flex flex-col">
-            <!-- 後台 Header -->
             <header class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
                 <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-white text-sm">
@@ -361,17 +354,16 @@
                 </button>
             </header>
 
-            <!-- 後台內容 -->
             <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
                 <!-- 工具列卡片網格 -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- 設定報到時段 -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-xs font-bold text-slate-500 uppercase">報到開放時段</span>
                             <i class="fa-solid fa-clock text-primary"></i>
                         </div>
-                        <div class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <span class="text-[10px] text-slate-400">開始時間</span>
                                 <input type="datetime-local" id="windowStartInput" onchange="saveTimeWindow()" class="w-full text-xs p-1.5 border rounded-lg">
@@ -383,31 +375,15 @@
                         </div>
                     </div>
 
-                    <!-- Google 試算表 URL 串接 -->
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Google 試算表串接 URL</span>
-                            <i class="fa-solid fa-link text-emerald-600"></i>
-                        </div>
-                        <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" 
-                            class="w-full text-xs p-2 border border-slate-300 rounded-lg mb-2">
-                        <button onclick="saveGasUrl()" class="w-full py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-lg hover:bg-black transition">
-                            套用並即時同步
-                        </button>
-                    </div>
-
                     <!-- 人員名單管理 -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
                             <span class="text-xs font-bold text-slate-500 uppercase">人員名單管理</span>
-                            <p class="text-xs text-slate-600 mt-1">新增單筆與會人員或匯入測試名單</p>
+                            <p class="text-xs text-slate-600 mt-1">手動新增單筆與會人員至雲端試算表</p>
                         </div>
-                        <div class="flex space-x-2 mt-3">
-                            <button onclick="openAddAttendeeModal()" class="w-1/2 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-bold transition">
-                                <i class="fa-solid fa-user-plus mr-1"></i>新增人員
-                            </button>
-                            <button onclick="importSampleAttendees()" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
-                                匯入範例
+                        <div class="mt-3">
+                            <button onclick="openAddAttendeeModal()" class="w-full py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-bold transition">
+                                <i class="fa-solid fa-user-plus mr-1"></i>手動新增人員
                             </button>
                         </div>
                     </div>
@@ -416,7 +392,7 @@
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
                         <div>
                             <span class="text-xs font-bold text-slate-500 uppercase">數據匯出與雲端同步</span>
-                            <p class="text-xs text-slate-600 mt-1">匯出 CSV 報表或同步雲端試算表</p>
+                            <p class="text-xs text-slate-600 mt-1">匯出 CSV 報表或同步雲端試算表名單</p>
                         </div>
                         <div class="flex space-x-2 mt-3">
                             <button onclick="exportToCSV()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition">
@@ -463,9 +439,7 @@
                                     <th class="p-3 text-center">操作</th>
                                 </tr>
                             </thead>
-                            <tbody id="adminTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
-                                <!-- 動態渲染與會人員 -->
-                            </tbody>
+                            <tbody id="adminTableBody" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
                         </table>
                     </div>
                 </div>
@@ -479,8 +453,8 @@
             <h3 class="font-bold text-slate-900 text-base mb-4">新增與會人員名單</h3>
             <form onsubmit="handleAddAttendeeSubmit(event)" class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-semibold mb-1">編號 (例如 003 或 A-003)</label>
-                    <input type="text" id="newAttendeeId" required placeholder="003" class="w-full p-2 border border-slate-300 rounded-lg">
+                    <label class="block font-semibold mb-1">編號 (例如 001 或 A-001)</label>
+                    <input type="text" id="newAttendeeId" required placeholder="001" class="w-full p-2 border border-slate-300 rounded-lg">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">與會人員姓名</label>
@@ -515,19 +489,15 @@
 
     <script>
         // =========================================================================
-        // 🌐 雲端 Google Apps Script 串接設定 (請在此處單引號內貼上您的 Apps Script 網址)
+        // 🌐 雲端 Google Apps Script 串接設定
         // =========================================================================
         const CONFIG = {
-            GAS_URL: 'https://script.google.com/macros/s/AKfycbz_y6Uurpzqmo1EGz_4t66O66M22_orgxEW9BwrrwD0PjM23C2YzBZj9GGnHF-fnfPxjg/exec'
+            GAS_URL: 'https://script.google.com/macros/s/AKfycbzdWswW8rY1rGIq4tsT4K-i6fk9g6iuUu50mRLPaIqevfOESEMIRsBi6HZeciQWDOxXBw/exec'
         };
 
-        // =========================================================================
-        // 全局狀態與初始化
-        // =========================================================================
         let isAdminLoggedIn = false;
 
         const state = {
-            gasUrl: CONFIG.GAS_URL,
             windowStart: '',
             windowEnd: '',
             attendees: [],
@@ -535,95 +505,86 @@
             currentActiveCardIndex: 0
         };
 
-        // 取得當前裝置時間 formatted as YYYY/MM/DD HH:mm
-        function getFormattedNow() {
-            const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            const hh = String(now.getHours()).padStart(2, '0');
-            const min = String(now.getMinutes()).padStart(2, '0');
+        function isGasConfigured() {
+            return Boolean(CONFIG.GAS_URL && !CONFIG.GAS_URL.includes('YOUR_APPS_SCRIPT_ID_HERE'));
+        }
+
+        function formatDateParts(dateObj) {
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            const hh = String(dateObj.getHours()).padStart(2, '0');
+            const min = String(dateObj.getMinutes()).padStart(2, '0');
             return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
         }
 
-        // 統一將任何時間格式轉換解析為 YYYY/MM/DD HH:mm
+        function getFormattedNow() {
+            return formatDateParts(new Date());
+        }
+
         function formatCheckInTimeDisplay(timeStr) {
             if (!timeStr) return '--';
-            let cleanStr = String(timeStr).trim();
+            const cleanStr = String(timeStr).trim();
             let d = new Date(cleanStr);
-            if (isNaN(d.getTime())) {
-                cleanStr = cleanStr.replace(/-/g, '/');
-                d = new Date(cleanStr);
-            }
-            if (!isNaN(d.getTime())) {
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                const hh = String(d.getHours()).padStart(2, '0');
-                const min = String(d.getMinutes()).padStart(2, '0');
-                return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
-            }
-            return cleanStr;
+            if (isNaN(d.getTime())) d = new Date(cleanStr.replace(/-/g, '/'));
+            return !isNaN(d.getTime()) ? formatDateParts(d) : cleanStr;
+        }
+
+        function formatDisplayId(rawId) {
+            if (!rawId) return '001';
+            const str = String(rawId).trim();
+            return /^\d+$/.test(str) ? str.padStart(3, '0') : str;
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            loadDeviceCardIds();
-            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
+            if (isGasConfigured()) {
                 syncFromGas();
             } else {
                 updateDeviceCount();
             }
         });
 
-        // 格式化 3 位數編號顯示 (如 001, 002)
-        function formatDisplayId(rawId) {
-            if (!rawId) return '001';
-            const num = parseInt(String(rawId).replace(/\D/g, ''), 10);
-            if (!isNaN(num)) {
-                return String(num).padStart(3, '0');
+        // =========================================================================
+        // 教育積分互斥控制 (勾選「不需要積分」時清除其他積分項目)
+        // =========================================================================
+        function handleCmeOptionChange(changedCheckbox) {
+            const allCmeCheckboxes = document.querySelectorAll('input[name="cmeOption"]');
+            if (changedCheckbox.value === '不需要積分' && changedCheckbox.checked) {
+                allCmeCheckboxes.forEach(cb => {
+                    if (cb.value !== '不需要積分') cb.checked = false;
+                });
+            } else if (changedCheckbox.value !== '不需要積分' && changedCheckbox.checked) {
+                allCmeCheckboxes.forEach(cb => {
+                    if (cb.value === '不需要積分') cb.checked = false;
+                });
             }
-            return String(rawId);
         }
 
         // =========================================================================
-        // 本裝置報到卡片記憶機制 (依據 ID)
+        // 本裝置報到卡片記憶機制
         // =========================================================================
         function saveDeviceCardIds() {
-            const ids = state.deviceCards.map(c => c.id);
+            const ids = state.deviceCards.map(c => formatDisplayId(c.id));
             localStorage.setItem('device_card_ids', JSON.stringify(ids));
         }
 
-        function loadDeviceCardIds() {
+        function syncDeviceCardsFromAttendees() {
             try {
-                const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]');
+                const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]').map(formatDisplayId);
                 state.deviceCards = [];
                 savedIds.forEach(id => {
-                    const matched = state.attendees.find(a => a.id === id && a.isCheckedIn);
-                    if (matched) state.deviceCards.push(matched);
-                });
-            } catch (e) {
-                console.error("Failed to load device cards", e);
-            }
-        }
-
-        function restoreDeviceCardsFromSync() {
-            try {
-                const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]');
-                state.deviceCards = [];
-                savedIds.forEach(id => {
-                    // 僅還原該裝置報到且目前依然處於「已報到」狀態的人員
-                    const matched = state.attendees.find(a => a.id === id && a.isCheckedIn);
+                    const matched = state.attendees.find(a => formatDisplayId(a.id) === id && a.isCheckedIn);
                     if (matched) state.deviceCards.push(matched);
                 });
                 saveDeviceCardIds();
                 updateDeviceCount();
             } catch (e) {
-                console.error("Restore failed", e);
+                console.error("Failed to sync device cards", e);
             }
         }
 
         // =========================================================================
-        // 表單送出與重複報到比對
+        // 表單送出與名單比對（僅允許名單內人員報到，不自動建立未報名者）
         // =========================================================================
         function handleCheckInSubmit(e) {
             e.preventDefault();
@@ -636,13 +597,24 @@
             const inputName = document.getElementById('attendeeName').value.trim();
             if (!inputName) return;
 
-            const selectedLunch = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
-            const selectedCme = Array.from(document.querySelectorAll('input[name="cmeOption"]:checked')).map(cb => cb.value);
+            const notFoundBanner = document.getElementById('notFoundNoticeBanner');
+            const duplicateBanner = document.getElementById('duplicateNoticeBanner');
+            notFoundBanner.classList.add('hidden');
+            duplicateBanner.classList.add('hidden');
 
-            let attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
+            const attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
 
-            if (attendee && attendee.isCheckedIn) {
-                // 已報到的重複提示處理
+            // 查無報名資料：阻擋報到並提示至櫃檯洽詢
+            if (!attendee) {
+                document.getElementById('notFoundNoticeText').textContent =
+                    `系統中尚無「${inputName}」之報名資料，請確認輸入是否正確，或至大會服務櫃檯洽詢現場補登。`;
+                notFoundBanner.classList.remove('hidden');
+                showToast('查無此報名人員資料，請至服務櫃檯洽詢。', 'error');
+                return;
+            }
+
+            // 已完成報到：顯示重複報到提醒與重新開啟卡片按鈕
+            if (attendee.isCheckedIn) {
                 document.getElementById('duplicateNameText').textContent = `${attendee.name} 先生/女士已完成報到`;
                 document.getElementById('duplicateTimeText').textContent = `報到時間：${formatCheckInTimeDisplay(attendee.checkInTime)}`;
 
@@ -656,9 +628,9 @@
                     duplicateBagEl.innerHTML = `<i class="fa-solid fa-box-archive text-amber-600 mr-1.5"></i>大會資料袋：尚未領取，請至大會服務櫃檯出示報到卡片領取`;
                 }
 
-                document.getElementById('duplicateNoticeBanner').classList.remove('hidden');
+                duplicateBanner.classList.remove('hidden');
 
-                if (!state.deviceCards.some(c => c.id === attendee.id)) {
+                if (!state.deviceCards.some(c => formatDisplayId(c.id) === formatDisplayId(attendee.id))) {
                     state.deviceCards.push(attendee);
                     saveDeviceCardIds();
                     updateDeviceCount();
@@ -667,53 +639,34 @@
                 return;
             }
 
-            document.getElementById('duplicateNoticeBanner').classList.add('hidden');
+            const selectedLunch = document.querySelector('input[name="lunchOption"]:checked')?.value || '葷食';
+            const selectedCme = Array.from(document.querySelectorAll('input[name="cmeOption"]:checked')).map(cb => cb.value);
 
-            const nowTimeStr = getFormattedNow();
+            attendee.isCheckedIn = true;
+            attendee.checkInTime = getFormattedNow();
+            attendee.lunch = selectedLunch;
+            attendee.cme = selectedCme;
 
-            if (!attendee) {
-                const newNum = state.attendees.length + 1;
-                const generatedId = String(newNum).padStart(3, '0');
-                attendee = {
-                    id: generatedId,
-                    name: inputName,
-                    isCheckedIn: true,
-                    checkInTime: nowTimeStr,
-                    lunch: selectedLunch,
-                    cme: selectedCme,
-                    bagCollected: false,
-                    bagCollectorName: ''
-                };
-                state.attendees.push(attendee);
-            } else {
-                attendee.isCheckedIn = true;
-                attendee.checkInTime = nowTimeStr;
-                attendee.lunch = selectedLunch;
-                attendee.cme = selectedCme;
-            }
-
-            if (!state.deviceCards.some(c => c.id === attendee.id)) {
+            const targetId = formatDisplayId(attendee.id);
+            if (!state.deviceCards.some(c => formatDisplayId(c.id) === targetId)) {
                 state.deviceCards.push(attendee);
             }
-
-            state.currentActiveCardIndex = state.deviceCards.findIndex(c => c.id === attendee.id);
+            state.currentActiveCardIndex = state.deviceCards.findIndex(c => formatDisplayId(c.id) === targetId);
 
             openCardModal();
             saveDeviceCardIds();
             updateDeviceCount();
 
             if (isAdminLoggedIn) renderAdminTable();
-
-            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
-                syncCheckInToGas(attendee);
-            }
+            postToGas({ action: 'checkin', data: attendee });
         }
 
         function reopenDuplicateCard() {
             const inputName = document.getElementById('attendeeName').value.trim();
             const attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
             if (attendee && attendee.isCheckedIn) {
-                const cardIndex = state.deviceCards.findIndex(c => c.id === attendee.id);
+                const targetId = formatDisplayId(attendee.id);
+                const cardIndex = state.deviceCards.findIndex(c => formatDisplayId(c.id) === targetId);
                 if (cardIndex !== -1) {
                     state.currentActiveCardIndex = cardIndex;
                 } else {
@@ -789,9 +742,6 @@
             }
         }
 
-        // =========================================================================
-        // 本裝置已報到人員列表邏輯
-        // =========================================================================
         function updateDeviceCount() {
             const container = document.getElementById('deviceCardsContainer');
             const header = document.getElementById('deviceCardsHeader');
@@ -806,13 +756,7 @@
             container.classList.remove('hidden');
             countSpan.textContent = state.deviceCards.length;
             list.innerHTML = '';
-
-            // 僅在同裝置 2 人（含）以上報到時才顯示頂部標題與人數說明
-            if (state.deviceCards.length >= 2) {
-                header.classList.remove('hidden');
-            } else {
-                header.classList.add('hidden');
-            }
+            header.classList.toggle('hidden', state.deviceCards.length < 2);
 
             state.deviceCards.forEach((card, idx) => {
                 const cardDiv = document.createElement('div');
@@ -850,13 +794,9 @@
             if (state.deviceCards.length === 0) return;
             const currentCard = state.deviceCards[state.currentActiveCardIndex];
             const input = document.getElementById('collectorNameInput');
-
-            if (state.deviceCards.length > 1 && state.currentActiveCardIndex > 0) {
-                input.value = state.deviceCards[0].name;
-            } else {
-                input.value = currentCard.name;
-            }
-
+            input.value = (state.deviceCards.length > 1 && state.currentActiveCardIndex > 0)
+                ? state.deviceCards[0].name
+                : currentCard.name;
             document.getElementById('bagModal').classList.remove('hidden');
         }
 
@@ -875,7 +815,7 @@
             currentCard.bagCollected = true;
             currentCard.bagCollectorName = collectorName;
 
-            const att = state.attendees.find(a => a.id === currentCard.id || a.name === currentCard.name);
+            const att = state.attendees.find(a => formatDisplayId(a.id) === formatDisplayId(currentCard.id) || a.name === currentCard.name);
             if (att) {
                 att.bagCollected = true;
                 att.bagCollectorName = collectorName;
@@ -888,14 +828,11 @@
             if (isAdminLoggedIn) renderAdminTable();
 
             showToast('已完成資料袋兌換紀錄！', 'success');
-
-            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
-                syncBagToGas(currentCard);
-            }
+            postToGas({ action: 'updateBag', data: currentCard });
         }
 
         // =========================================================================
-        // 後台管理系統邏輯
+        // 後台管理系統邏輯 (帳號密碼由雲端試算表 setting 分頁驗證)
         // =========================================================================
         function openAdminLoginModal() {
             if (isAdminLoggedIn) {
@@ -909,25 +846,52 @@
             document.getElementById('adminLoginModal').classList.add('hidden');
         }
 
-        function handleAdminLogin(e) {
+        async function handleAdminLogin(e) {
             e.preventDefault();
-            const acc = document.getElementById('adminAccount').value;
-            const pwd = document.getElementById('adminPassword').value;
+            const acc = document.getElementById('adminAccount').value.trim();
+            const pwd = document.getElementById('adminPassword').value.trim();
+            const btn = document.getElementById('adminLoginSubmitBtn');
 
-            if (acc === 'twlean' && pwd === 'lean25553000!') {
-                isAdminLoggedIn = true;
-                closeAdminLoginModal();
-                document.getElementById('adminConsoleModal').classList.remove('hidden');
-                document.getElementById('navAdminBtn').classList.add('hidden');
-                document.getElementById('navLogoutBtn').classList.remove('hidden');
-                
-                document.getElementById('gasUrlInput').value = state.gasUrl;
-                document.getElementById('windowStartInput').value = state.windowStart;
-                document.getElementById('windowEndInput').value = state.windowEnd;
-                renderAdminTable();
-                showToast('登入成功！歡迎使用後台管理系統。', 'success');
-            } else {
-                showToast('帳號或密碼錯誤！存取拒絕。', 'error');
+            if (!isGasConfigured()) {
+                showToast('尚未設定雲端連線網址，無法驗證帳號密碼。', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '驗證中...';
+
+            try {
+                const res = await fetch(CONFIG.GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'verifyAdmin',
+                        data: { account: acc, password: pwd }
+                    })
+                });
+                const result = await res.json();
+
+                if (result && result.success) {
+                    isAdminLoggedIn = true;
+                    document.getElementById('adminPassword').value = '';
+                    closeAdminLoginModal();
+                    document.getElementById('adminConsoleModal').classList.remove('hidden');
+                    document.getElementById('navAdminBtn').classList.add('hidden');
+                    document.getElementById('navLogoutBtn').classList.remove('hidden');
+                    
+                    document.getElementById('windowStartInput').value = state.windowStart;
+                    document.getElementById('windowEndInput').value = state.windowEnd;
+                    renderAdminTable();
+                    showToast('登入成功！歡迎使用後台管理系統。', 'success');
+                } else {
+                    showToast('帳號或密碼錯誤！存取拒絕。', 'error');
+                }
+            } catch (err) {
+                console.error('Admin login verification error:', err);
+                showToast('雲端驗證連線失敗，請確認 Apps Script 部署權限！', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '登入後台系統';
             }
         }
 
@@ -956,16 +920,9 @@
             const now = new Date();
             const start = state.windowStart ? new Date(state.windowStart) : null;
             const end = state.windowEnd ? new Date(state.windowEnd) : null;
+            const isOpen = (!start || now >= start) && (!end || now <= end);
 
-            let isOpen = true;
-            if (start && now < start) isOpen = false;
-            if (end && now > end) isOpen = false;
-
-            if (!isOpen) {
-                banner.classList.remove('hidden');
-            } else {
-                banner.classList.add('hidden');
-            }
+            banner.classList.toggle('hidden', isOpen);
             return isOpen;
         }
 
@@ -976,16 +933,17 @@
 
             const filtered = state.attendees.filter(a => 
                 a.name.toLowerCase().includes(searchKeyword) || 
-                String(a.id).toLowerCase().includes(searchKeyword)
+                formatDisplayId(a.id).toLowerCase().includes(searchKeyword)
             );
 
             document.getElementById('totalAttendeesBadge').textContent = `共 ${filtered.length} 筆`;
 
             filtered.forEach(att => {
+                const displayId = formatDisplayId(att.id);
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 border-b border-slate-100 transition';
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-primary font-mono">${formatDisplayId(att.id)}</td>
+                    <td class="p-3 font-bold text-primary font-mono">${displayId}</td>
                     <td class="p-3 font-bold">${att.name}</td>
                     <td class="p-3">
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${att.isCheckedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}">
@@ -1002,13 +960,13 @@
                     </td>
                     <td class="p-3">${att.bagCollectorName || '-'}</td>
                     <td class="p-3 text-center space-x-1.5">
-                        <button onclick="toggleAttendeeCheckIn('${att.id}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換報到狀態">
+                        <button onclick="toggleAttendeeCheckIn('${displayId}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換報到狀態">
                             <i class="fa-solid fa-user-check"></i>
                         </button>
-                        <button onclick="toggleBagStatus('${att.id}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換資料袋狀態">
+                        <button onclick="toggleBagStatus('${displayId}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換資料袋狀態">
                             <i class="fa-solid fa-box"></i>
                         </button>
-                        <button onclick="deleteAttendee('${att.id}')" class="p-1.5 rounded hover:bg-red-100 text-red-600" title="刪除人員">
+                        <button onclick="deleteAttendee('${displayId}')" class="p-1.5 rounded hover:bg-red-100 text-red-600" title="刪除人員">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
@@ -1017,62 +975,68 @@
             });
         }
 
+        function findAttendeeById(id) {
+            const targetId = formatDisplayId(id);
+            return state.attendees.find(a => formatDisplayId(a.id) === targetId);
+        }
+
         function toggleAttendeeCheckIn(id) {
-            const att = state.attendees.find(a => a.id === id);
-            if (att) {
-                att.isCheckedIn = !att.isCheckedIn;
-                if (att.isCheckedIn) {
-                    att.checkInTime = getFormattedNow();
-                    if (!state.deviceCards.some(c => c.id === att.id)) {
-                        state.deviceCards.push(att);
-                    }
-                } else {
-                    // 取消報到：清空所有報到記錄，並將該卡片從本裝置清單中移除
-                    att.checkInTime = '';
-                    att.lunch = '';
-                    att.cme = [];
-                    att.bagCollected = false;
-                    att.bagCollectorName = '';
-                    state.deviceCards = state.deviceCards.filter(c => c.id !== id);
+            const att = findAttendeeById(id);
+            if (!att) return;
+
+            const targetId = formatDisplayId(id);
+            att.isCheckedIn = !att.isCheckedIn;
+            if (att.isCheckedIn) {
+                att.checkInTime = getFormattedNow();
+                if (!state.deviceCards.some(c => formatDisplayId(c.id) === targetId)) {
+                    state.deviceCards.push(att);
                 }
-
-                saveDeviceCardIds();
-                updateDeviceCount();
-                renderAdminTable();
-                showToast(`已更新 ${att.name} 報到狀態`, 'info');
-                if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncCheckInToGas(att);
+            } else {
+                att.checkInTime = '';
+                att.lunch = '';
+                att.cme = [];
+                att.bagCollected = false;
+                att.bagCollectorName = '';
+                state.deviceCards = state.deviceCards.filter(c => formatDisplayId(c.id) !== targetId);
             }
-        }
 
-        function toggleBagStatus(id) {
-            const att = state.attendees.find(a => a.id === id);
-            if (att) {
-                att.bagCollected = !att.bagCollected;
-                if (!att.bagCollected) att.bagCollectorName = '';
-                else if (!att.bagCollectorName) att.bagCollectorName = att.name;
-                
-                // 同步本裝置卡片狀態
-                const devCard = state.deviceCards.find(c => c.id === id);
-                if (devCard) {
-                    devCard.bagCollected = att.bagCollected;
-                    devCard.bagCollectorName = att.bagCollectorName;
-                }
-
-                renderAdminTable();
-                updateDeviceCount();
-                showToast(`已更新 ${att.name} 資料袋狀態`, 'info');
-                if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncBagToGas(att);
-            }
-        }
-
-        function deleteAttendee(id) {
-            state.attendees = state.attendees.filter(a => a.id !== id);
-            state.deviceCards = state.deviceCards.filter(c => c.id !== id);
             saveDeviceCardIds();
             updateDeviceCount();
             renderAdminTable();
-            showToast('已刪除該名與會人員資料', 'info');
-            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncDeleteToGas(id);
+            showToast(`已更新 ${att.name} 報到狀態`, 'info');
+            postToGas({ action: 'checkin', data: att });
+        }
+
+        function toggleBagStatus(id) {
+            const att = findAttendeeById(id);
+            if (!att) return;
+
+            const targetId = formatDisplayId(id);
+            att.bagCollected = !att.bagCollected;
+            if (!att.bagCollected) att.bagCollectorName = '';
+            else if (!att.bagCollectorName) att.bagCollectorName = att.name;
+            
+            const devCard = state.deviceCards.find(c => formatDisplayId(c.id) === targetId);
+            if (devCard) {
+                devCard.bagCollected = att.bagCollected;
+                devCard.bagCollectorName = att.bagCollectorName;
+            }
+
+            renderAdminTable();
+            updateDeviceCount();
+            showToast(`已更新 ${att.name} 資料袋狀態`, 'info');
+            postToGas({ action: 'updateBag', data: att });
+        }
+
+        function deleteAttendee(id) {
+            const targetId = formatDisplayId(id);
+            state.attendees = state.attendees.filter(a => formatDisplayId(a.id) !== targetId);
+            state.deviceCards = state.deviceCards.filter(c => formatDisplayId(c.id) !== targetId);
+            saveDeviceCardIds();
+            updateDeviceCount();
+            renderAdminTable();
+            showToast('已刪除該名與會人員資料並同步雲端', 'info');
+            postToGas({ action: 'deleteAttendee', data: { id: targetId } });
         }
 
         function openAddAttendeeModal() {
@@ -1083,11 +1047,11 @@
         }
         function handleAddAttendeeSubmit(e) {
             e.preventDefault();
-            const id = document.getElementById('newAttendeeId').value.trim();
+            const id = formatDisplayId(document.getElementById('newAttendeeId').value.trim());
             const name = document.getElementById('newAttendeeName').value.trim();
             const lunch = document.getElementById('newAttendeeLunch').value;
 
-            if (state.attendees.some(a => a.id === id)) {
+            if (findAttendeeById(id)) {
                 showToast('編號已存在！請更換編號', 'warning');
                 return;
             }
@@ -1099,35 +1063,18 @@
             state.attendees.push(newAttendee);
             renderAdminTable();
             closeAddAttendeeModal();
+            document.getElementById('newAttendeeId').value = '';
+            document.getElementById('newAttendeeName').value = '';
             showToast('新增與會人員成功！', 'success');
-
-            if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
-                syncAddAttendeeToGas(newAttendee);
-            }
-        }
-
-        function importSampleAttendees() {
-            const samples = [
-                { id: '001', name: '張大明', isCheckedIn: false, checkInTime: '', lunch: '葷食', cme: ['醫師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' },
-                { id: '002', name: '李美華', isCheckedIn: false, checkInTime: '', lunch: '素食', cme: ['護理師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' },
-                { id: '003', name: '陳國強', isCheckedIn: false, checkInTime: '', lunch: '葷食', cme: ['醫師 (品質 2.4)'], bagCollected: false, bagCollectorName: '' }
-            ];
-            samples.forEach(s => {
-                if (!state.attendees.some(a => a.id === s.id)) {
-                    state.attendees.push(s);
-                    if (state.gasUrl && !state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) syncAddAttendeeToGas(s);
-                }
-            });
-            renderAdminTable();
-            showToast('已匯入測試範例名單並同步至雲端！', 'success');
+            postToGas({ action: 'addAttendee', data: newAttendee });
         }
 
         // =========================================================================
         // 雲端 Apps Script API 通訊模組
         // =========================================================================
         function postToGas(payload) {
-            if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) return;
-            fetch(state.gasUrl, {
+            if (!isGasConfigured()) return;
+            fetch(CONFIG.GAS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1135,24 +1082,8 @@
             }).catch(e => console.error("GAS Sync error:", e));
         }
 
-        function syncCheckInToGas(attendee) {
-            postToGas({ action: 'checkin', data: attendee });
-        }
-
-        function syncBagToGas(attendee) {
-            postToGas({ action: 'updateBag', data: attendee });
-        }
-
-        function syncAddAttendeeToGas(attendee) {
-            postToGas({ action: 'addAttendee', data: attendee });
-        }
-
-        function syncDeleteToGas(id) {
-            postToGas({ action: 'deleteAttendee', data: { id: id } });
-        }
-
         async function syncFromGas() {
-            if (!state.gasUrl || state.gasUrl.includes('YOUR_APPS_SCRIPT_ID_HERE')) {
+            if (!isGasConfigured()) {
                 showToast('提示：請在 CONFIG.GAS_URL 填寫 Web App 網址以連線雲端！', 'warning');
                 return;
             }
@@ -1160,11 +1091,11 @@
             if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>Syncing...`;
 
             try {
-                const res = await fetch(`${state.gasUrl}?action=getAll`);
+                const res = await fetch(`${CONFIG.GAS_URL}?action=getAll`);
                 const data = await res.json();
                 if (Array.isArray(data)) {
-                    state.attendees = data;
-                    restoreDeviceCardsFromSync();
+                    state.attendees = data.map(a => ({ ...a, id: formatDisplayId(a.id) }));
+                    syncDeviceCardsFromAttendees();
                     renderAdminTable();
                     if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>Connected`;
                     showToast(`已成功同步雲端試算表資料 (${data.length} 筆)`, 'success');
@@ -1174,14 +1105,6 @@
                 if (badge) badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span>Offline`;
                 showToast('無法連線至雲端試算表，請確認 Web App 網址與權限設定！', 'error');
             }
-        }
-
-        function saveGasUrl() {
-            const url = document.getElementById('gasUrlInput').value.trim();
-            if (!url) return;
-            state.gasUrl = url;
-            syncFromGas();
-            showToast('已更新 Google 試算表串接網址並開始同步！', 'success');
         }
 
         function exportToCSV() {
@@ -1207,16 +1130,18 @@
             const toastMsg = document.getElementById('toastMessage');
             const toastIcon = document.getElementById('toastIcon');
 
+            const iconMap = {
+                success: 'fa-solid fa-circle-check text-emerald-400',
+                error: 'fa-solid fa-circle-xmark text-red-400',
+                warning: 'fa-solid fa-triangle-exclamation text-amber-400',
+                info: 'fa-solid fa-circle-info text-blue-400'
+            };
+
             toastMsg.textContent = msg;
-            if (type === 'success') toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
-            else if (type === 'error') toastIcon.className = 'fa-solid fa-circle-xmark text-red-400';
-            else if (type === 'warning') toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400';
-            else toastIcon.className = 'fa-solid fa-circle-info text-blue-400';
+            toastIcon.className = iconMap[type] || iconMap.info;
 
             toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
     </script>
 </body>
