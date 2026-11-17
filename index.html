@@ -229,13 +229,13 @@
 
     <!-- 報到卡片 Modal 視窗 -->
     <div id="cardModal" class="fixed inset-0 z-50 hidden overflow-y-auto modal-backdrop flex items-center justify-center p-4 sm:p-6">
-        <div class="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center">
+        <div id="cardModalBody" class="relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center">
             
             <button onclick="closeCardModal()" aria-label="關閉" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white text-xl transition border border-white/10">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <div id="modalCardTabs" class="bg-blue-950/70 px-4 py-2 border-b border-blue-400/20 flex overflow-x-auto gap-2 scrollbar-none pr-12 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6"></div>
+            <div id="modalCardTabs" class="bg-black/25 px-4 py-2 border-b border-white/15 flex overflow-x-auto gap-2 scrollbar-none pr-12 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 mb-6"></div>
 
             <div class="space-y-4">
                 <div class="text-2xl sm:text-[30px] font-bold tracking-wide text-white drop-shadow-sm leading-tight">
@@ -251,18 +251,18 @@
                 </div>
 
                 <div class="py-2">
-                    <p class="text-blue-200/90 text-xs sm:text-sm font-medium tracking-wide">您的專屬大會編號</p>
+                    <p id="cardIdLabel" class="text-blue-200/90 text-xs sm:text-sm font-medium tracking-wide">您的專屬大會編號</p>
                     <div id="cardAttendeeId" class="text-8xl sm:text-9xl font-black text-white tracking-wider font-mono drop-shadow-xl leading-none py-2">
                         001
                     </div>
                 </div>
 
-                <div class="p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg">
-                    <span class="text-base">⚠️</span>
-                    <span>請向櫃台出示此畫面領取大會資料袋</span>
+                <div id="cardNoticeBox" class="p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg">
+                    <span id="cardNoticeIcon" class="text-base">⚠️</span>
+                    <span id="cardNoticeText">請向櫃台出示此畫面領取大會資料袋</span>
                 </div>
 
-                <div class="pt-2">
+                <div id="cardBagActionArea" class="pt-2">
                     <button id="redeemBagBtn" onclick="openBagModal()" class="w-full py-3.5 px-4 bg-[#3b82f6] hover:bg-[#2563eb] active:scale-[0.99] text-white font-bold rounded-2xl shadow-lg transition text-base disabled:bg-slate-600/70 disabled:text-slate-300 disabled:cursor-not-allowed">
                         <span id="redeemBagBtnText">兌換資料袋</span>
                     </button>
@@ -453,7 +453,7 @@
             <h3 class="font-bold text-slate-900 text-base mb-4">新增與會人員名單</h3>
             <form onsubmit="handleAddAttendeeSubmit(event)" class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-semibold mb-1">編號 (例如 001 或 A-001)</label>
+                    <label class="block font-semibold mb-1">編號 (例如 001、VIP 或 VIP01)</label>
                     <input type="text" id="newAttendeeId" required placeholder="001" class="w-full p-2 border border-slate-300 rounded-lg">
                 </div>
                 <div>
@@ -536,6 +536,10 @@
             return /^\d+$/.test(str) ? str.padStart(3, '0') : str;
         }
 
+        function isVipAttendee(rawId) {
+            return String(rawId || '').trim().toUpperCase().includes('VIP');
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             if (isGasConfigured()) {
                 syncFromGas();
@@ -584,7 +588,7 @@
         }
 
         // =========================================================================
-        // 表單送出與名單比對（僅允許名單內人員報到，不自動建立未報名者）
+        // 表單送出與名單比對（僅允許名單內人員報到）
         // =========================================================================
         function handleCheckInSubmit(e) {
             e.preventDefault();
@@ -604,7 +608,6 @@
 
             const attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
 
-            // 查無報名資料：阻擋報到並提示至櫃檯洽詢
             if (!attendee) {
                 document.getElementById('notFoundNoticeText').textContent =
                     `系統中尚無「${inputName}」之報名資料，請確認輸入是否正確，或至大會服務櫃檯洽詢現場補登。`;
@@ -613,13 +616,15 @@
                 return;
             }
 
-            // 已完成報到：顯示重複報到提醒與重新開啟卡片按鈕
             if (attendee.isCheckedIn) {
                 document.getElementById('duplicateNameText').textContent = `${attendee.name} 先生/女士已完成報到`;
                 document.getElementById('duplicateTimeText').textContent = `報到時間：${formatCheckInTimeDisplay(attendee.checkInTime)}`;
 
                 const duplicateBagEl = document.getElementById('duplicateBagStatusText');
-                if (attendee.bagCollected) {
+                if (isVipAttendee(attendee.id)) {
+                    duplicateBagEl.className = "text-xs sm:text-sm font-bold text-purple-800 mt-1";
+                    duplicateBagEl.innerHTML = `<i class="fa-solid fa-crown text-purple-700 mr-1.5"></i>貴賓禮遇：請至貴賓區報到`;
+                } else if (attendee.bagCollected) {
                     const collector = attendee.bagCollectorName || attendee.name;
                     duplicateBagEl.className = "text-xs sm:text-sm font-bold text-emerald-700 mt-1";
                     duplicateBagEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>大會資料袋：已由 <span class="underline">${collector}</span> 領取`;
@@ -680,7 +685,7 @@
         }
 
         // =========================================================================
-        // 報到卡片 Modal 渲染
+        // 報到卡片 Modal 渲染 (含 VIP 專屬視覺與邏輯切換)
         // =========================================================================
         function openCardModal() {
             if (state.deviceCards.length === 0) return;
@@ -707,7 +712,7 @@
                 const btn = document.createElement('button');
                 btn.className = `px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${
                     idx === state.currentActiveCardIndex
-                    ? 'bg-white text-primary shadow'
+                    ? 'bg-white text-slate-900 shadow'
                     : 'bg-white/10 text-white/80 hover:bg-white/20'
                 }`;
                 btn.textContent = card.name;
@@ -724,21 +729,62 @@
             const currentCard = state.deviceCards[state.currentActiveCardIndex];
             if (!currentCard) return;
 
+            const isVip = isVipAttendee(currentCard.id);
+            const cardBody = document.getElementById('cardModalBody');
+            const idLabel = document.getElementById('cardIdLabel');
+            const idEl = document.getElementById('cardAttendeeId');
+            const noticeBox = document.getElementById('cardNoticeBox');
+            const noticeIcon = document.getElementById('cardNoticeIcon');
+            const noticeText = document.getElementById('cardNoticeText');
+            const bagActionArea = document.getElementById('cardBagActionArea');
+
             document.getElementById('cardAttendeeName').textContent = currentCard.name;
-            document.getElementById('cardAttendeeId').textContent = formatDisplayId(currentCard.id);
+            idEl.textContent = formatDisplayId(currentCard.id);
 
-            const redeemBtn = document.getElementById('redeemBagBtn');
-            const redeemBtnText = document.getElementById('redeemBagBtnText');
-            const bagInfo = document.getElementById('bagCollectedInfo');
+            if (isVip) {
+                // VIP 專屬配色與版面：底色 RGB(111,51,129)、編號與提示文字 RGB(209,191,69)、移除兌換資料袋按鈕
+                cardBody.className = 'relative w-full max-w-sm sm:max-w-md text-white rounded-[32px] shadow-2xl border border-purple-300/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
+                cardBody.style.background = 'rgb(111, 51, 129)';
 
-            if (currentCard.bagCollected) {
-                redeemBtn.disabled = true;
-                redeemBtnText.textContent = '已完成資料袋兌換';
-                bagInfo.textContent = `領取/代領人：${currentCard.bagCollectorName || currentCard.name}`;
+                idLabel.className = 'text-purple-200/90 text-xs sm:text-sm font-medium tracking-wide';
+                idEl.style.color = 'rgb(209, 191, 69)';
+
+                noticeBox.className = 'p-4 rounded-2xl font-bold text-sm sm:text-base text-center flex items-center justify-center space-x-2 shadow-lg border border-amber-300/30';
+                noticeBox.style.backgroundColor = 'rgba(0, 0, 0, 0.25)';
+                noticeBox.style.color = 'rgb(209, 191, 69)';
+                noticeIcon.textContent = '👑';
+                noticeText.textContent = '請至貴賓區報到';
+
+                bagActionArea.classList.add('hidden');
             } else {
-                redeemBtn.disabled = false;
-                redeemBtnText.textContent = '兌換資料袋';
-                bagInfo.textContent = '出示畫面予櫃檯人員點擊兌換';
+                // 一般與會者樣式
+                cardBody.className = 'relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
+                cardBody.style.background = '';
+
+                idLabel.className = 'text-blue-200/90 text-xs sm:text-sm font-medium tracking-wide';
+                idEl.style.color = '';
+
+                noticeBox.className = 'p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg';
+                noticeBox.style.backgroundColor = '';
+                noticeBox.style.color = '';
+                noticeIcon.textContent = '⚠️';
+                noticeText.textContent = '請向櫃台出示此畫面領取大會資料袋';
+
+                bagActionArea.classList.remove('hidden');
+
+                const redeemBtn = document.getElementById('redeemBagBtn');
+                const redeemBtnText = document.getElementById('redeemBagBtnText');
+                const bagInfo = document.getElementById('bagCollectedInfo');
+
+                if (currentCard.bagCollected) {
+                    redeemBtn.disabled = true;
+                    redeemBtnText.textContent = '已完成資料袋兌換';
+                    bagInfo.textContent = `領取/代領人：${currentCard.bagCollectorName || currentCard.name}`;
+                } else {
+                    redeemBtn.disabled = false;
+                    redeemBtnText.textContent = '兌換資料袋';
+                    bagInfo.textContent = '出示畫面予櫃檯人員點擊兌換';
+                }
             }
         }
 
@@ -760,29 +806,46 @@
 
             state.deviceCards.forEach((card, idx) => {
                 const cardDiv = document.createElement('div');
+                const isVip = isVipAttendee(card.id);
                 const isCollected = card.bagCollected;
-                cardDiv.className = `p-4 rounded-xl border transition flex justify-between items-center cursor-pointer shadow-sm ${
-                    isCollected 
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-950 hover:bg-emerald-100' 
-                    : 'bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100'
-                }`;
+
+                if (isVip) {
+                    cardDiv.className = 'p-4 rounded-xl border border-purple-300 bg-purple-50 text-purple-950 hover:bg-purple-100 transition flex justify-between items-center cursor-pointer shadow-sm';
+                } else {
+                    cardDiv.className = `p-4 rounded-xl border transition flex justify-between items-center cursor-pointer shadow-sm ${
+                        isCollected 
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-950 hover:bg-emerald-100' 
+                        : 'bg-blue-50/90 border-blue-200 text-blue-950 hover:bg-blue-100'
+                    }`;
+                }
+
                 cardDiv.onclick = () => {
                     state.currentActiveCardIndex = idx;
                     openCardModal();
                 };
+
+                const badgeStyle = isVip
+                    ? 'style="background-color: rgb(111, 51, 129); color: rgb(209, 191, 69);"'
+                    : '';
+                const badgeClass = isVip
+                    ? 'w-10 h-10 rounded-lg font-black flex items-center justify-center text-xs font-mono shadow'
+                    : `w-10 h-10 rounded-lg ${isCollected ? 'bg-emerald-600' : 'bg-primary'} text-white font-black flex items-center justify-center text-sm font-mono shadow`;
+                const statusTag = isVip
+                    ? '<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-purple-200 text-purple-900">請至貴賓區報到</span>'
+                    : `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold ${isCollected ? 'bg-emerald-200 text-emerald-900' : 'bg-blue-200 text-blue-900'}">${isCollected ? '已領資料袋' : '未領資料袋'}</span>`;
+                const actionColor = isVip ? 'text-purple-800' : (isCollected ? 'text-emerald-700' : 'text-primary');
+
                 cardDiv.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-lg ${isCollected ? 'bg-emerald-600' : 'bg-primary'} text-white font-black flex items-center justify-center text-sm font-mono shadow">
+                        <div class="${badgeClass}" ${badgeStyle}>
                             ${formatDisplayId(card.id)}
                         </div>
                         <div>
                             <p class="font-bold text-sm">${card.name}</p>
-                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold ${isCollected ? 'bg-emerald-200 text-emerald-900' : 'bg-blue-200 text-blue-900'}">
-                                ${isCollected ? '已領資料袋' : '未領資料袋'}
-                            </span>
+                            ${statusTag}
                         </div>
                     </div>
-                    <span class="text-xs ${isCollected ? 'text-emerald-700' : 'text-primary'} font-bold flex items-center">
+                    <span class="text-xs ${actionColor} font-bold flex items-center">
                         查看卡片 <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
                     </span>
                 `;
@@ -793,6 +856,8 @@
         function openBagModal() {
             if (state.deviceCards.length === 0) return;
             const currentCard = state.deviceCards[state.currentActiveCardIndex];
+            if (isVipAttendee(currentCard.id)) return;
+
             const input = document.getElementById('collectorNameInput');
             input.value = (state.deviceCards.length > 1 && state.currentActiveCardIndex > 0)
                 ? state.deviceCards[0].name
@@ -940,10 +1005,11 @@
 
             filtered.forEach(att => {
                 const displayId = formatDisplayId(att.id);
+                const isVip = isVipAttendee(att.id);
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 border-b border-slate-100 transition';
                 tr.innerHTML = `
-                    <td class="p-3 font-bold text-primary font-mono">${displayId}</td>
+                    <td class="p-3 font-bold font-mono ${isVip ? 'text-purple-700' : 'text-primary'}">${displayId}</td>
                     <td class="p-3 font-bold">${att.name}</td>
                     <td class="p-3">
                         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${att.isCheckedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}">
@@ -954,9 +1020,10 @@
                     <td class="p-3">${att.lunch || '-'}</td>
                     <td class="p-3">${(att.cme && att.cme.length) ? att.cme.join(', ') : '無'}</td>
                     <td class="p-3">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${att.bagCollected ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}">
-                            ${att.bagCollected ? '已領取' : '未領取'}
-                        </span>
+                        ${isVip
+                            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">貴賓區報到</span>'
+                            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${att.bagCollected ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}">${att.bagCollected ? '已領取' : '未領取'}</span>`
+                        }
                     </td>
                     <td class="p-3">${att.bagCollectorName || '-'}</td>
                     <td class="p-3 text-center space-x-1.5">
@@ -1115,7 +1182,8 @@
             let csv = '\uFEFF編號,姓名,報到狀態,報到時間,午餐需求,教育積分,資料袋狀態,領取或代領人姓名\n';
             state.attendees.forEach(a => {
                 const cmeStr = (a.cme || []).join('; ');
-                csv += `"${formatDisplayId(a.id)}","${a.name}","${a.isCheckedIn ? '已報到' : '未報到'}","${formatCheckInTimeDisplay(a.checkInTime)}","${a.lunch || ''}","${cmeStr}","${a.bagCollected ? '已領取' : '未領取'}","${a.bagCollectorName || ''}"\n`;
+                const bagStatus = isVipAttendee(a.id) ? '貴賓區報到' : (a.bagCollected ? '已領取' : '未領取');
+                csv += `"${formatDisplayId(a.id)}","${a.name}","${a.isCheckedIn ? '已報到' : '未報到'}","${formatCheckInTimeDisplay(a.checkInTime)}","${a.lunch || ''}","${cmeStr}","${bagStatus}","${a.bagCollectorName || ''}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
