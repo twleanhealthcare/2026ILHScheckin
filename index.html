@@ -453,7 +453,7 @@
             <h3 class="font-bold text-slate-900 text-base mb-4">新增與會人員名單</h3>
             <form onsubmit="handleAddAttendeeSubmit(event)" class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-semibold mb-1">編號 (例如 001、VIP 或 VIP01)</label>
+                    <label class="block font-semibold mb-1">編號 (例如 001 或 VIP)</label>
                     <input type="text" id="newAttendeeId" required placeholder="001" class="w-full p-2 border border-slate-300 rounded-lg">
                 </div>
                 <div>
@@ -530,14 +530,20 @@
             return !isNaN(d.getTime()) ? formatDateParts(d) : cleanStr;
         }
 
+        function isVipAttendee(rawId) {
+            return String(rawId || '').trim().toUpperCase().includes('VIP');
+        }
+
         function formatDisplayId(rawId) {
             if (!rawId) return '001';
             const str = String(rawId).trim();
+            if (isVipAttendee(str)) return 'VIP';
             return /^\d+$/.test(str) ? str.padStart(3, '0') : str;
         }
 
-        function isVipAttendee(rawId) {
-            return String(rawId || '').trim().toUpperCase().includes('VIP');
+        // 唯一識別鍵（編號 + 姓名），避免多位共用 VIP 序號的人員互相覆蓋或名稱跳動
+        function getAttendeeKey(att) {
+            return `${formatDisplayId(att.id)}::${String(att.name || '').trim().toLowerCase()}`;
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -565,22 +571,25 @@
         }
 
         // =========================================================================
-        // 本裝置報到卡片記憶機制
+        // 本裝置報到卡片記憶機制（以 編號::姓名 為唯一鍵）
         // =========================================================================
-        function saveDeviceCardIds() {
-            const ids = state.deviceCards.map(c => formatDisplayId(c.id));
-            localStorage.setItem('device_card_ids', JSON.stringify(ids));
+        function saveDeviceCardKeys() {
+            const keys = state.deviceCards.map(c => getAttendeeKey(c));
+            localStorage.setItem('device_card_keys', JSON.stringify(keys));
         }
 
         function syncDeviceCardsFromAttendees() {
             try {
-                const savedIds = JSON.parse(localStorage.getItem('device_card_ids') || '[]').map(formatDisplayId);
+                const savedKeys = JSON.parse(localStorage.getItem('device_card_keys') || '[]');
                 state.deviceCards = [];
-                savedIds.forEach(id => {
-                    const matched = state.attendees.find(a => formatDisplayId(a.id) === id && a.isCheckedIn);
+                savedKeys.forEach(key => {
+                    const matched = state.attendees.find(a => getAttendeeKey(a) === key && a.isCheckedIn);
                     if (matched) state.deviceCards.push(matched);
                 });
-                saveDeviceCardIds();
+                if (state.currentActiveCardIndex >= state.deviceCards.length) {
+                    state.currentActiveCardIndex = Math.max(0, state.deviceCards.length - 1);
+                }
+                saveDeviceCardKeys();
                 updateDeviceCount();
             } catch (e) {
                 console.error("Failed to sync device cards", e);
@@ -588,7 +597,7 @@
         }
 
         // =========================================================================
-        // 表單送出與名單比對（僅允許名單內人員報到）
+        // 表單送出與名單比對
         // =========================================================================
         function handleCheckInSubmit(e) {
             e.preventDefault();
@@ -616,6 +625,8 @@
                 return;
             }
 
+            const attKey = getAttendeeKey(attendee);
+
             if (attendee.isCheckedIn) {
                 document.getElementById('duplicateNameText').textContent = `${attendee.name} 先生/女士已完成報到`;
                 document.getElementById('duplicateTimeText').textContent = `報到時間：${formatCheckInTimeDisplay(attendee.checkInTime)}`;
@@ -623,7 +634,7 @@
                 const duplicateBagEl = document.getElementById('duplicateBagStatusText');
                 if (isVipAttendee(attendee.id)) {
                     duplicateBagEl.className = "text-xs sm:text-sm font-bold text-purple-800 mt-1";
-                    duplicateBagEl.innerHTML = `<i class="fa-solid fa-crown text-purple-700 mr-1.5"></i>貴賓禮遇：請至貴賓區報到`;
+                    duplicateBagEl.textContent = "貴賓禮遇：請至貴賓區報到";
                 } else if (attendee.bagCollected) {
                     const collector = attendee.bagCollectorName || attendee.name;
                     duplicateBagEl.className = "text-xs sm:text-sm font-bold text-emerald-700 mt-1";
@@ -635,9 +646,9 @@
 
                 duplicateBanner.classList.remove('hidden');
 
-                if (!state.deviceCards.some(c => formatDisplayId(c.id) === formatDisplayId(attendee.id))) {
+                if (!state.deviceCards.some(c => getAttendeeKey(c) === attKey)) {
                     state.deviceCards.push(attendee);
-                    saveDeviceCardIds();
+                    saveDeviceCardKeys();
                     updateDeviceCount();
                 }
                 showToast('您先前已完成報到！已為您帶出報到紀錄。', 'warning');
@@ -652,14 +663,13 @@
             attendee.lunch = selectedLunch;
             attendee.cme = selectedCme;
 
-            const targetId = formatDisplayId(attendee.id);
-            if (!state.deviceCards.some(c => formatDisplayId(c.id) === targetId)) {
+            if (!state.deviceCards.some(c => getAttendeeKey(c) === attKey)) {
                 state.deviceCards.push(attendee);
             }
-            state.currentActiveCardIndex = state.deviceCards.findIndex(c => formatDisplayId(c.id) === targetId);
+            state.currentActiveCardIndex = state.deviceCards.findIndex(c => getAttendeeKey(c) === attKey);
 
             openCardModal();
-            saveDeviceCardIds();
+            saveDeviceCardKeys();
             updateDeviceCount();
 
             if (isAdminLoggedIn) renderAdminTable();
@@ -670,14 +680,14 @@
             const inputName = document.getElementById('attendeeName').value.trim();
             const attendee = state.attendees.find(a => a.name.toLowerCase() === inputName.toLowerCase());
             if (attendee && attendee.isCheckedIn) {
-                const targetId = formatDisplayId(attendee.id);
-                const cardIndex = state.deviceCards.findIndex(c => formatDisplayId(c.id) === targetId);
+                const attKey = getAttendeeKey(attendee);
+                const cardIndex = state.deviceCards.findIndex(c => getAttendeeKey(c) === attKey);
                 if (cardIndex !== -1) {
                     state.currentActiveCardIndex = cardIndex;
                 } else {
                     state.deviceCards.push(attendee);
                     state.currentActiveCardIndex = state.deviceCards.length - 1;
-                    saveDeviceCardIds();
+                    saveDeviceCardKeys();
                     updateDeviceCount();
                 }
                 openCardModal();
@@ -685,7 +695,7 @@
         }
 
         // =========================================================================
-        // 報到卡片 Modal 渲染 (含 VIP 專屬視覺與邏輯切換)
+        // 報到卡片 Modal 渲染
         // =========================================================================
         function openCardModal() {
             if (state.deviceCards.length === 0) return;
@@ -739,25 +749,23 @@
             const bagActionArea = document.getElementById('cardBagActionArea');
 
             document.getElementById('cardAttendeeName').textContent = currentCard.name;
-            idEl.textContent = formatDisplayId(currentCard.id);
+            idEl.textContent = isVip ? 'VIP' : formatDisplayId(currentCard.id);
 
             if (isVip) {
-                // VIP 專屬配色與版面：底色 RGB(111,51,129)、編號與提示文字 RGB(209,191,69)、隱藏「您的專屬大會編號」與兌換按鈕
                 cardBody.className = 'relative w-full max-w-sm sm:max-w-md text-white rounded-[32px] shadow-2xl border border-purple-300/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
                 cardBody.style.background = 'rgb(111, 51, 129)';
 
                 idLabel.classList.add('hidden');
                 idEl.style.color = 'rgb(209, 191, 69)';
 
-                noticeBox.className = 'p-4 rounded-2xl font-bold text-sm sm:text-base text-center flex items-center justify-center space-x-2 shadow-lg border border-amber-300/30';
+                noticeBox.className = 'p-4 rounded-2xl font-bold text-sm sm:text-base text-center flex items-center justify-center shadow-lg border border-amber-300/30';
                 noticeBox.style.backgroundColor = 'rgba(0, 0, 0, 0.25)';
                 noticeBox.style.color = 'rgb(209, 191, 69)';
-                noticeIcon.textContent = '👑';
+                noticeIcon.classList.add('hidden');
                 noticeText.textContent = '請至貴賓區報到';
 
                 bagActionArea.classList.add('hidden');
             } else {
-                // 一般與會者樣式
                 cardBody.className = 'relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
                 cardBody.style.background = '';
 
@@ -768,6 +776,7 @@
                 noticeBox.className = 'p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg';
                 noticeBox.style.backgroundColor = '';
                 noticeBox.style.color = '';
+                noticeIcon.classList.remove('hidden');
                 noticeIcon.textContent = '⚠️';
                 noticeText.textContent = '請向櫃台出示此畫面領取大會資料袋';
 
@@ -839,7 +848,7 @@
                 cardDiv.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <div class="${badgeClass}" ${badgeStyle}>
-                            ${formatDisplayId(card.id)}
+                            ${isVip ? 'VIP' : formatDisplayId(card.id)}
                         </div>
                         <div>
                             <p class="font-bold text-sm">${card.name}</p>
@@ -881,7 +890,7 @@
             currentCard.bagCollected = true;
             currentCard.bagCollectorName = collectorName;
 
-            const att = state.attendees.find(a => formatDisplayId(a.id) === formatDisplayId(currentCard.id) || a.name === currentCard.name);
+            const att = state.attendees.find(a => getAttendeeKey(a) === getAttendeeKey(currentCard));
             if (att) {
                 att.bagCollected = true;
                 att.bagCollectorName = collectorName;
@@ -889,7 +898,7 @@
 
             closeBagModal();
             renderActiveCardContent();
-            saveDeviceCardIds();
+            saveDeviceCardKeys();
             updateDeviceCount();
             if (isAdminLoggedIn) renderAdminTable();
 
@@ -1006,7 +1015,10 @@
 
             filtered.forEach(att => {
                 const displayId = formatDisplayId(att.id);
+                const attKey = getAttendeeKey(att);
+                const encodedKey = encodeURIComponent(attKey);
                 const isVip = isVipAttendee(att.id);
+
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 border-b border-slate-100 transition';
                 tr.innerHTML = `
@@ -1028,13 +1040,13 @@
                     </td>
                     <td class="p-3">${att.bagCollectorName || '-'}</td>
                     <td class="p-3 text-center space-x-1.5">
-                        <button onclick="toggleAttendeeCheckIn('${displayId}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換報到狀態">
+                        <button onclick="toggleAttendeeCheckIn('${encodedKey}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換報到狀態">
                             <i class="fa-solid fa-user-check"></i>
                         </button>
-                        <button onclick="toggleBagStatus('${displayId}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換資料袋狀態">
+                        <button onclick="toggleBagStatus('${encodedKey}')" class="p-1.5 rounded hover:bg-slate-200 text-slate-600" title="切換資料袋狀態">
                             <i class="fa-solid fa-box"></i>
                         </button>
-                        <button onclick="deleteAttendee('${displayId}')" class="p-1.5 rounded hover:bg-red-100 text-red-600" title="刪除人員">
+                        <button onclick="deleteAttendee('${encodedKey}')" class="p-1.5 rounded hover:bg-red-100 text-red-600" title="刪除人員">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
@@ -1043,20 +1055,20 @@
             });
         }
 
-        function findAttendeeById(id) {
-            const targetId = formatDisplayId(id);
-            return state.attendees.find(a => formatDisplayId(a.id) === targetId);
+        function findAttendeeByEncodedKey(encodedKey) {
+            const key = decodeURIComponent(encodedKey);
+            return state.attendees.find(a => getAttendeeKey(a) === key);
         }
 
-        function toggleAttendeeCheckIn(id) {
-            const att = findAttendeeById(id);
+        function toggleAttendeeCheckIn(encodedKey) {
+            const att = findAttendeeByEncodedKey(encodedKey);
             if (!att) return;
 
-            const targetId = formatDisplayId(id);
+            const attKey = getAttendeeKey(att);
             att.isCheckedIn = !att.isCheckedIn;
             if (att.isCheckedIn) {
                 att.checkInTime = getFormattedNow();
-                if (!state.deviceCards.some(c => formatDisplayId(c.id) === targetId)) {
+                if (!state.deviceCards.some(c => getAttendeeKey(c) === attKey)) {
                     state.deviceCards.push(att);
                 }
             } else {
@@ -1065,26 +1077,26 @@
                 att.cme = [];
                 att.bagCollected = false;
                 att.bagCollectorName = '';
-                state.deviceCards = state.deviceCards.filter(c => formatDisplayId(c.id) !== targetId);
+                state.deviceCards = state.deviceCards.filter(c => getAttendeeKey(c) !== attKey);
             }
 
-            saveDeviceCardIds();
+            saveDeviceCardKeys();
             updateDeviceCount();
             renderAdminTable();
             showToast(`已更新 ${att.name} 報到狀態`, 'info');
             postToGas({ action: 'checkin', data: att });
         }
 
-        function toggleBagStatus(id) {
-            const att = findAttendeeById(id);
+        function toggleBagStatus(encodedKey) {
+            const att = findAttendeeByEncodedKey(encodedKey);
             if (!att) return;
 
-            const targetId = formatDisplayId(id);
+            const attKey = getAttendeeKey(att);
             att.bagCollected = !att.bagCollected;
             if (!att.bagCollected) att.bagCollectorName = '';
             else if (!att.bagCollectorName) att.bagCollectorName = att.name;
             
-            const devCard = state.deviceCards.find(c => formatDisplayId(c.id) === targetId);
+            const devCard = state.deviceCards.find(c => getAttendeeKey(c) === attKey);
             if (devCard) {
                 devCard.bagCollected = att.bagCollected;
                 devCard.bagCollectorName = att.bagCollectorName;
@@ -1096,15 +1108,18 @@
             postToGas({ action: 'updateBag', data: att });
         }
 
-        function deleteAttendee(id) {
-            const targetId = formatDisplayId(id);
-            state.attendees = state.attendees.filter(a => formatDisplayId(a.id) !== targetId);
-            state.deviceCards = state.deviceCards.filter(c => formatDisplayId(c.id) !== targetId);
-            saveDeviceCardIds();
+        function deleteAttendee(encodedKey) {
+            const att = findAttendeeByEncodedKey(encodedKey);
+            if (!att) return;
+
+            const attKey = getAttendeeKey(att);
+            state.attendees = state.attendees.filter(a => getAttendeeKey(a) !== attKey);
+            state.deviceCards = state.deviceCards.filter(c => getAttendeeKey(c) !== attKey);
+            saveDeviceCardKeys();
             updateDeviceCount();
             renderAdminTable();
-            showToast('已刪除該名與會人員資料並同步雲端', 'info');
-            postToGas({ action: 'deleteAttendee', data: { id: targetId } });
+            showToast(`已刪除 ${att.name} 資料並同步雲端`, 'info');
+            postToGas({ action: 'deleteAttendee', data: { id: att.id, name: att.name } });
         }
 
         function openAddAttendeeModal() {
@@ -1119,8 +1134,12 @@
             const name = document.getElementById('newAttendeeName').value.trim();
             const lunch = document.getElementById('newAttendeeLunch').value;
 
-            if (findAttendeeById(id)) {
-                showToast('編號已存在！請更換編號', 'warning');
+            const isDuplicate = isVipAttendee(id)
+                ? state.attendees.some(a => isVipAttendee(a.id) && a.name.toLowerCase() === name.toLowerCase())
+                : state.attendees.some(a => formatDisplayId(a.id) === id);
+
+            if (isDuplicate) {
+                showToast(isVipAttendee(id) ? '此 VIP 姓名已存在！' : '編號已存在！請更換編號', 'warning');
                 return;
             }
 
