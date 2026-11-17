@@ -741,12 +741,12 @@
             document.getElementById('cardAttendeeName').textContent = currentCard.name;
             idEl.textContent = formatDisplayId(currentCard.id);
 
-            if (isVip) {
-                // VIP 專屬配色與版面：底色 RGB(111,51,129)、編號與提示文字 RGB(209,191,69)、移除兌換資料袋按鈕
+if (isVip) {
+                // VIP 專屬配色與版面：底色 RGB(111,51,129)、編號與提示文字 RGB(209,191,69)、隱藏「您的專屬大會編號」與兌換按鈕
                 cardBody.className = 'relative w-full max-w-sm sm:max-w-md text-white rounded-[32px] shadow-2xl border border-purple-300/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
                 cardBody.style.background = 'rgb(111, 51, 129)';
 
-                idLabel.className = 'text-purple-200/90 text-xs sm:text-sm font-medium tracking-wide';
+                idLabel.classList.add('hidden');
                 idEl.style.color = 'rgb(209, 191, 69)';
 
                 noticeBox.className = 'p-4 rounded-2xl font-bold text-sm sm:text-base text-center flex items-center justify-center space-x-2 shadow-lg border border-amber-300/30';
@@ -756,12 +756,13 @@
                 noticeText.textContent = '請至貴賓區報到';
 
                 bagActionArea.classList.add('hidden');
-            } else {
+} else {
                 // 一般與會者樣式
                 cardBody.className = 'relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
                 cardBody.style.background = '';
 
                 idLabel.className = 'text-blue-200/90 text-xs sm:text-sm font-medium tracking-wide';
+                idLabel.classList.remove('hidden');
                 idEl.style.color = '';
 
                 noticeBox.className = 'p-4 bg-white rounded-2xl text-[#1e293b] font-bold text-xs sm:text-sm text-center flex items-center justify-center space-x-2 shadow-lg';
