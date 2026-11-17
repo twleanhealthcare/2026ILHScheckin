@@ -492,7 +492,7 @@
         // 🌐 雲端 Google Apps Script 串接設定
         // =========================================================================
         const CONFIG = {
-            GAS_URL: 'https://script.google.com/macros/s/AKfycbzdWswW8rY1rGIq4tsT4K-i6fk9g6iuUu50mRLPaIqevfOESEMIRsBi6HZeciQWDOxXBw/exec'
+            GAS_URL: 'https://script.google.com/macros/s/AKfycbz_y6Uurpzqmo1EGz_4t66O66M22_orgxEW9BwrrwD0PjM23C2YzBZj9GGnHF-fnfPxjg/exec'
         };
 
         let isAdminLoggedIn = false;
@@ -741,7 +741,7 @@
             document.getElementById('cardAttendeeName').textContent = currentCard.name;
             idEl.textContent = formatDisplayId(currentCard.id);
 
-if (isVip) {
+            if (isVip) {
                 // VIP 專屬配色與版面：底色 RGB(111,51,129)、編號與提示文字 RGB(209,191,69)、隱藏「您的專屬大會編號」與兌換按鈕
                 cardBody.className = 'relative w-full max-w-sm sm:max-w-md text-white rounded-[32px] shadow-2xl border border-purple-300/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
                 cardBody.style.background = 'rgb(111, 51, 129)';
@@ -756,7 +756,7 @@ if (isVip) {
                 noticeText.textContent = '請至貴賓區報到';
 
                 bagActionArea.classList.add('hidden');
-} else {
+            } else {
                 // 一般與會者樣式
                 cardBody.className = 'relative w-full max-w-sm sm:max-w-md bg-gradient-to-b from-[#10369c] to-[#0a2674] text-white rounded-[32px] shadow-2xl border border-blue-400/30 overflow-hidden transform transition-all my-auto p-6 sm:p-8 text-center';
                 cardBody.style.background = '';
